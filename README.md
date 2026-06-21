@@ -1,16 +1,5 @@
 <div align="center">
-
-# 🚀 Startup Idea Validation Platform (SIVP)
-### Multi-Agent AI-Powered Startup Intelligence & Validation System
-
-**The AI co-founder that answers the only question that matters:**
-> *"I have a startup idea. Should I build it, how should I build it, how can I grow it, and how can I get funding?"*
-
-[![Status](https://img.shields.io/badge/status-active-success.svg)](#)
-[![Agents](https://img.shields.io/badge/AI%20Agents-10-blue.svg)](#)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](#)
-[![Made for Founders](https://img.shields.io/badge/made%20for-founders-orange.svg)](#)
-
+#  Startup Idea Validation Platform (SIVP)
 </div>
 
 ---
@@ -48,6 +37,7 @@ Many aspiring entrepreneurs fail not because they lack ambition, but because the
 <td valign="top" width="50%">
 
 **Frontend**
+
 - React
 - React Router
 - Redux Toolkit
@@ -55,28 +45,34 @@ Many aspiring entrepreneurs fail not because they lack ambition, but because the
 - Recharts
 
 **Backend**
+
 - Spring Boot
 - Spring Security
 - JWT Authentication
 - REST APIs
 
 **Database**
+
 - PostgreSQL (Supabase)
 
 </td>
 <td valign="top" width="50%">
 
 **Authentication**
+
 - Supabase Auth
 
 **Storage**
+
 - Supabase Storage
 
 **AI**
+
 - Gemini API
 - OpenAI API
 
 **Deployment**
+
 - Frontend: Vercel
 - Backend: Render / Railway
 - Database: Supabase
@@ -95,34 +91,34 @@ This section is the heart of SIVP. Everything else is implementation detail. **T
 
 You have an idea. You're excited. And then reality hits:
 
-- ❓ *"Is this even a good idea, or am I just excited?"*
-- ❓ *"Is there really a market for this, or am I imagining demand?"*
-- ❓ *"Who else is already doing this — and why would anyone choose me?"*
-- ❓ *"What should I actually build first? What's my MVP?"*
-- ❓ *"How do I make money? What should I charge?"*
-- ❓ *"How do I find customers without burning my entire budget on ads?"*
-- ❓ *"Will investors take me seriously? What's my company even worth?"*
-- ❓ *"What happens if I fail — and can I see that coming?"*
-- ❓ *"Where do I even start with legal docs, government grants, or mentors?"*
-- ❓ *"How do I even track whether I'm making real progress?"*
+- ❓ _"Is this even a good idea, or am I just excited?"_
+- ❓ _"Is there really a market for this, or am I imagining demand?"_
+- ❓ _"Who else is already doing this — and why would anyone choose me?"_
+- ❓ _"What should I actually build first? What's my MVP?"_
+- ❓ _"How do I make money? What should I charge?"_
+- ❓ _"How do I find customers without burning my entire budget on ads?"_
+- ❓ _"Will investors take me seriously? What's my company even worth?"_
+- ❓ _"What happens if I fail — and can I see that coming?"_
+- ❓ _"Where do I even start with legal docs, government grants, or mentors?"_
+- ❓ _"How do I even track whether I'm making real progress?"_
 
 Most founders either **freeze** under the weight of these questions, **guess** and waste months building the wrong thing, or **pay consultants** thousands of dollars for answers that should be a starting point, not a luxury.
 
 ### How SIVP changes that
 
-| For a first-time founder, this gives you... | Instead of... |
-|---|---|
-| 🎯 An honest **validation score** before you write a line of code | Months of building on a hunch |
-| 📊 Real **market sizing (TAM/SAM/SOM)** and demand signals | Guesswork and wishful thinking |
-| 🥊 A clear **competitor map** and your actual differentiation | Discovering competitors *after* launch |
-| 🏗️ A concrete **MVP definition** and feature priority list | Building everything at once and shipping nothing |
-| 💰 A **monetization model and pricing plan** that fits your market | Picking a price out of thin air |
-| 📈 A **go-to-market and growth roadmap** | Hoping social media posts "go viral" |
-| 🏦 **Investor-readiness scoring**, valuation estimates, and a pitch deck | Walking into investor meetings unprepared |
-| ⚠️ **Failure-risk analysis** before you bet your savings on it | Finding out the hard way |
-| 🤝 Curated **mentors, grants, incubators, and legal templates** | Not knowing these resources even exist |
-| 📋 A **live progress tracker** from idea to funding | Losing track of where you actually stand |
-| 📄 One unified, professional, exportable **report** | Fifteen scattered Google Docs and spreadsheets |
+| For a first-time founder, this gives you...                              | Instead of...                                    |
+| ------------------------------------------------------------------------ | ------------------------------------------------ |
+| 🎯 An honest **validation score** before you write a line of code        | Months of building on a hunch                    |
+| 📊 Real **market sizing (TAM/SAM/SOM)** and demand signals               | Guesswork and wishful thinking                   |
+| 🥊 A clear **competitor map** and your actual differentiation            | Discovering competitors _after_ launch           |
+| 🏗️ A concrete **MVP definition** and feature priority list               | Building everything at once and shipping nothing |
+| 💰 A **monetization model and pricing plan** that fits your market       | Picking a price out of thin air                  |
+| 📈 A **go-to-market and growth roadmap**                                 | Hoping social media posts "go viral"             |
+| 🏦 **Investor-readiness scoring**, valuation estimates, and a pitch deck | Walking into investor meetings unprepared        |
+| ⚠️ **Failure-risk analysis** before you bet your savings on it           | Finding out the hard way                         |
+| 🤝 Curated **mentors, grants, incubators, and legal templates**          | Not knowing these resources even exist           |
+| 📋 A **live progress tracker** from idea to funding                      | Losing track of where you actually stand         |
+| 📄 One unified, professional, exportable **report**                      | Fifteen scattered Google Docs and spreadsheets   |
 
 ### Who this is built for
 
@@ -131,7 +127,7 @@ Most founders either **freeze** under the weight of these questions, **guess** a
 - 💼 **Early-stage founders preparing for investor meetings** who need data, not just confidence
 - 🌱 **Anyone with "just an idea"** who wants an honest, data-backed answer before committing time and money
 
-> **The single biggest value of SIVP:** it replaces *months of scattered uncertainty* with a *single afternoon of structured clarity.*
+> **The single biggest value of SIVP:** it replaces _months of scattered uncertainty_ with a _single afternoon of structured clarity._
 
 ---
 
@@ -143,14 +139,15 @@ Before any AI agent runs, SIVP is built on two foundational modules that every u
 
 SIVP supports **role-based access** across four distinct user types:
 
-| Role | Access & Purpose |
-|---|---|
-| 👤 **Founder** | Submits startup ideas, views validation reports, tracks their own progress |
-| 🧑‍🏫 **Mentor** | Reviews assigned founders, provides feedback, schedules check-ins |
-| 🏢 **Incubator Admin** | Manages a cohort of startups, assigns mentors, monitors milestones across founders |
-| 🛡️ **Super Admin** | Full platform oversight — manages users, roles, incubators, and system configuration |
+| Role                   | Access & Purpose                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| 👤 **Founder**         | Submits startup ideas, views validation reports, tracks their own progress           |
+| 🧑‍🏫 **Mentor**          | Reviews assigned founders, provides feedback, schedules check-ins                    |
+| 🏢 **Incubator Admin** | Manages a cohort of startups, assigns mentors, monitors milestones across founders   |
+| 🛡️ **Super Admin**     | Full platform oversight — manages users, roles, incubators, and system configuration |
 
 **Implementation:**
+
 - Secure sign-up/login via **Supabase Auth**
 - **JWT-based authentication** issued and validated by the **Spring Boot + Spring Security** backend
 - **Role-Based Access Control (RBAC)** — each role sees a different dashboard and has different permissions
@@ -164,6 +161,7 @@ SIVP supports **role-based access** across four distinct user types:
 Once authenticated, a founder submits their startup idea through a structured intake form. This structured input is what feeds every downstream AI agent — the more precise this module is, the sharper every subsequent analysis becomes.
 
 **Fields captured:**
+
 - 🏷️ **Startup Name**
 - 🏭 **Industry**
 - ❓ **Problem Statement**
@@ -245,11 +243,13 @@ Each agent is a specialist. Together, they cover the entire startup journey from
 ---
 
 ### 1️⃣ VisionAI
-**Question Solved:** *"Is my idea worth pursuing?"*
+
+**Question Solved:** _"Is my idea worth pursuing?"_
 
 This agent understands the startup idea and determines whether the problem being solved is real. Before any analysis, every startup idea is broken into structured components.
 
 **Responsibilities**
+
 - **Idea Validation** — Problem Statement Analysis, Solution Analysis, Target Audience Detection, Industry Detection
 - **Product-Market Fit** — Demand Analysis, Problem Severity Analysis, PMF Score
 - **Idea Intelligence** — Idea Maturity Score, Idea Uniqueness Check, Idea Similarity Detection
@@ -260,11 +260,13 @@ This agent understands the startup idea and determines whether the problem being
 ---
 
 ### 2️⃣ MarketMind
-**Question Solved:** *"Is there a market large enough for this startup?"*
+
+**Question Solved:** _"Is there a market large enough for this startup?"_
 
 This agent performs complete market research and opportunity analysis.
 
 **Responsibilities**
+
 - **Market Analysis** — Industry Overview, Market Demand, Industry Trends, Growth Opportunities, Risk Analysis
 - **Market Sizing** — TAM, SAM, SOM
 - **Market Intelligence** — Market Saturation Analysis, Market Entry Difficulty, Industry Benchmarking
@@ -275,11 +277,13 @@ This agent performs complete market research and opportunity analysis.
 ---
 
 ### 3️⃣ RivalScope
-**Question Solved:** *"Who are my competitors and how can I beat them?"*
+
+**Question Solved:** _"Who are my competitors and how can I beat them?"_
 
 This agent studies existing companies and identifies opportunities to differentiate.
 
 **Responsibilities**
+
 - **Competitor Discovery** — Direct Competitors, Indirect Competitors
 - **Competitor Intelligence** — Feature Comparison, Pricing Analysis, Market Positioning, Strength Analysis, Weakness Analysis
 - **Strategic Analysis** — Competitive Advantage Detection, Market Gap Identification, Blue Ocean Opportunities
@@ -289,11 +293,13 @@ This agent studies existing companies and identifies opportunities to differenti
 ---
 
 ### 4️⃣ BuildIQ
-**Question Solved:** *"What exactly should I build and how should I monetize it?"*
+
+**Question Solved:** _"What exactly should I build and how should I monetize it?"_
 
 This agent converts an idea into an executable business plan.
 
 **Responsibilities**
+
 - **Business Model Design** — Business Model Canvas, Value Proposition, Revenue Streams
 - **Revenue Planning** — Subscription Models, Freemium Models, Marketplace Models, Licensing Models
 - **Pricing Intelligence** — Pricing Recommendation, Pricing Benchmarking
@@ -305,11 +311,13 @@ This agent converts an idea into an executable business plan.
 ---
 
 ### 5️⃣ SWOTify
-**Question Solved:** *"What are my real strengths, weaknesses, opportunities, and threats?"*
+
+**Question Solved:** _"What are my real strengths, weaknesses, opportunities, and threats?"_
 
 This agent synthesizes the outputs of VisionAI, MarketMind, RivalScope, and BuildIQ into a clear, classic SWOT framework — giving founders a single, digestible strategic snapshot before moving into funding and growth planning.
 
 **Responsibilities**
+
 - Strengths Identification (from idea, market, and product analysis)
 - Weaknesses Identification (gaps in product, team, or positioning)
 - Opportunities Mapping (market gaps, timing, underserved segments)
@@ -320,11 +328,13 @@ This agent synthesizes the outputs of VisionAI, MarketMind, RivalScope, and Buil
 ---
 
 ### 6️⃣ GrowthIQ
-**Question Solved:** *"How will I get customers and scale?"*
+
+**Question Solved:** _"How will I get customers and scale?"_
 
 This agent focuses on customer acquisition, marketing, and scaling strategy.
 
 **Responsibilities**
+
 - **Go-To-Market Strategy** — Launch Plan, Acquisition Strategy, Marketing Channels
 - **Marketing Intelligence** — SEO Strategy, Social Media Strategy, LinkedIn Strategy, Paid Ads Strategy, Referral Strategy
 - **Growth Planning** — Growth Roadmap, Scaling Strategy, Customer Retention Strategy
@@ -335,11 +345,13 @@ This agent focuses on customer acquisition, marketing, and scaling strategy.
 ---
 
 ### 7️⃣ FundIQ
-**Question Solved:** *"Can this startup attract investment and become profitable?"*
+
+**Question Solved:** _"Can this startup attract investment and become profitable?"_
 
 This is the investor-facing intelligence layer.
 
 **Responsibilities**
+
 - **Financial Planning** — Revenue Forecast, Expense Forecast, Profit Forecast, Cash Flow Projection
 - **Financial Intelligence** — Burn Rate, Runway, Break-even Analysis
 - **Funding Intelligence** — Funding Requirement Estimation, Investment Readiness Assessment, Startup Valuation
@@ -357,23 +369,23 @@ The Investor Readiness Score is FundIQ's signature output — a single, weighted
 
 **Score Calculation**
 
-| Metric | Weight |
-|---|---|
-| Market Potential | 25% |
-| Competition Level | 20% |
-| Revenue Potential | 20% |
-| Scalability | 20% |
-| Innovation Score | 15% |
+| Metric            | Weight |
+| ----------------- | ------ |
+| Market Potential  | 25%    |
+| Competition Level | 20%    |
+| Revenue Potential | 20%    |
+| Scalability       | 20%    |
+| Innovation Score  | 15%    |
 
 **Final Score Example:** `82/100`
 
 **Score Categories**
 
-| Range | Category |
-|---|---|
-| 0 – 40 | 🔴 Weak |
-| 41 – 60 | 🟠 Moderate |
-| 61 – 80 | 🟡 Good |
+| Range    | Category          |
+| -------- | ----------------- |
+| 0 – 40   | 🔴 Weak           |
+| 41 – 60  | 🟠 Moderate       |
+| 61 – 80  | 🟡 Good           |
 | 81 – 100 | 🟢 Investor Ready |
 
 Each metric is calculated using inputs already produced upstream by other agents — Market Potential and Competition Level draw from **MarketMind** and **RivalScope**, Revenue Potential and Scalability draw from **BuildIQ** and **GrowthIQ**, and Innovation Score draws from **VisionAI**'s idea uniqueness check. This is the clearest example of why agents share context through NEXUS rather than running in isolation.
@@ -381,11 +393,13 @@ Each metric is calculated using inputs already produced upstream by other agents
 ---
 
 ### 8️⃣ MentorAI
-**Question Solved:** *"Who can help me execute this startup?"*
+
+**Question Solved:** _"Who can help me execute this startup?"_
 
 This agent provides ecosystem support.
 
 **Responsibilities**
+
 - **Mentorship** — Mentor Recommendation, Domain Expert Recommendation
 - **Government Support** — Startup India Recommendations, MSME Scheme Recommendations, Grant Recommendations
 - **Ecosystem Support** — Incubator Recommendation, Accelerator Recommendation
@@ -396,11 +410,13 @@ This agent provides ecosystem support.
 ---
 
 ### 9️⃣ IncubaTrack
-**Question Solved:** *"How do I track startup progress from idea to funding?"*
+
+**Question Solved:** _"How do I track startup progress from idea to funding?"_
 
 This is mainly built for incubators, accelerators, and universities (such as KEIC) running multiple startups through a structured program.
 
 **Responsibilities**
+
 - **Startup Lifecycle Tracking** — Idea → Validation → MVP → Launch → Revenue → Funding
 - **Incubation Management** — Milestone Tracking, Mentor Assignment, Review Scheduling, Startup Progress Monitoring
 - **Analytics** — Startup Health Score, Incubation Dashboard, Founder Dashboard, Admin Dashboard
@@ -410,11 +426,13 @@ This is mainly built for incubators, accelerators, and universities (such as KEI
 ---
 
 ### 🔟 ReportForge
-**Question Solved:** *"Can I get everything in a professional report?"*
+
+**Question Solved:** _"Can I get everything in a professional report?"_
 
 The final report generation engine — compiles every agent's output into a single, polished, presentation-ready document.
 
 **Responsibilities — Generates:**
+
 - Executive Summary
 - Market Research Report
 - Competitor Report
@@ -429,11 +447,13 @@ The final report generation engine — compiles every agent's output into a sing
 ---
 
 ### 🧭 NEXUS — Master Orchestrator
-**Question Solved:** *"How do all agents work together?"*
+
+**Question Solved:** _"How do all agents work together?"_
 
 The conductor that connects every agent into one seamless pipeline.
 
 **Workflow Management**
+
 ```
 User Idea
    │
@@ -451,6 +471,7 @@ Final Report
 ```
 
 **Technical Responsibilities**
+
 - Agent Coordination
 - Parallel Execution
 - Context Sharing across agents
@@ -464,6 +485,7 @@ Final Report
 Real, named, usable capabilities — not just analysis categories. This is what SIVP actually surfaces for a founder.
 
 ### 🏛️ Government Schemes & Funding Database
+
 - ✅ **Startup India Seed Fund Scheme (SISFS) matcher** — checks DPIIT-recognition eligibility and estimates qualification for the grant + convertible-debt component
 - ✅ **Startup India Fund of Funds (FoF) tracker** — surfaces the current Fund of Funds corpus and which SEBI-registered AIFs/VCs it flows through for your sector
 - ✅ **MUDRA Yojana loan calculator** — collateral-free loan slabs (Shishu / Kishor / Tarun / TarunPlus) mapped to your business stage
@@ -476,6 +498,7 @@ Real, named, usable capabilities — not just analysis categories. This is what 
 - ✅ **Multi-scheme stacking advisor** — tells you which schemes can be combined (e.g. DPIIT + MSME + CGTMSE + SISFS) vs. which are mutually exclusive, and in what order to apply
 
 ### 💵 Cost, Fee & Department-Wise Breakdown
+
 - ✅ **Company incorporation cost estimator** — Private Limited vs. LLP vs. OPC, with government + professional fee split
 - ✅ **Patent filing fee breakdown** — domestic vs. international, plus the applicable government rebate percentage for DPIIT-recognised startups
 - ✅ **Trademark filing fee breakdown** — standard vs. startup-rebate fee slabs
@@ -490,6 +513,7 @@ Real, named, usable capabilities — not just analysis categories. This is what 
 - ✅ **One-time vs. recurring cost separation** so founders can see true monthly burn vs. setup cost
 
 ### 🎓 Incubator, Accelerator & Grant Network
+
 - ✅ **IncubaTrack** — full lifecycle dashboard (Idea → Validation → MVP → Launch → Revenue → Funding) with stage-gated milestones
 - ✅ **Empaneled-incubator finder** — matches you to SISFS-empaneled incubators and Atal Incubation Centres by sector and location
 - ✅ **Accelerator cohort matcher** — surfaces relevant accelerator application windows and deadlines
@@ -498,6 +522,7 @@ Real, named, usable capabilities — not just analysis categories. This is what 
 - ✅ **Equity-free vs. equity-based funding tagging** on every recommended source, so founders know dilution impact upfront
 
 ### 📊 Interactive Dashboards
+
 - ✅ **Founder Dashboard** — single view of validation score, market score, funding readiness, and active milestones
 - ✅ **Admin / Incubator Dashboard** — multi-startup, multi-cohort view for incubators and universities tracking many founders at once
 - ✅ **Investor-Facing Dashboard** — clean, shareable snapshot of valuation, traction, and risk for fundraising conversations
@@ -506,6 +531,7 @@ Real, named, usable capabilities — not just analysis categories. This is what 
 - ✅ **Milestone & Review Scheduler** — auto-reminders for incubator review checkpoints and mentor check-ins
 
 ### 💡 Idea & Validation
+
 - ✅ Problem statement and solution analysis
 - ✅ Automatic industry and target-audience detection
 - ✅ Product-Market Fit (PMF) scoring
@@ -514,6 +540,7 @@ Real, named, usable capabilities — not just analysis categories. This is what 
 - ✅ Auto-generated customer personas and Ideal Customer Profiles (ICP)
 
 ### 🌍 Market Intelligence
+
 - ✅ TAM / SAM / SOM market sizing
 - ✅ Industry trend and growth-opportunity analysis
 - ✅ Market saturation and entry-difficulty scoring
@@ -521,6 +548,7 @@ Real, named, usable capabilities — not just analysis categories. This is what 
 - ✅ Industry benchmarking against existing players
 
 ### 🥊 Competitive Intelligence
+
 - ✅ Direct and indirect competitor discovery
 - ✅ Feature-by-feature and pricing comparison matrices
 - ✅ Strength/weakness breakdown per competitor
@@ -528,6 +556,7 @@ Real, named, usable capabilities — not just analysis categories. This is what 
 - ✅ Automated competitive advantage detection
 
 ### 🧩 Strategy & Planning
+
 - ✅ Auto-generated SWOT analysis
 - ✅ Business Model Canvas generation
 - ✅ Value proposition design
@@ -538,6 +567,7 @@ Real, named, usable capabilities — not just analysis categories. This is what 
 - ✅ Team structure planning, missing-skill detection, and co-founder matching
 
 ### 📈 Growth & Marketing
+
 - ✅ Go-to-market and launch planning
 - ✅ Channel-specific strategy (SEO, social, LinkedIn, paid ads, referrals)
 - ✅ Growth and scaling roadmaps
@@ -545,6 +575,7 @@ Real, named, usable capabilities — not just analysis categories. This is what 
 - ✅ Live KPI and traction monitoring with a growth score
 
 ### 🏦 Financial & Investor Readiness
+
 - ✅ Revenue, expense, profit, and cash-flow forecasting
 - ✅ Burn rate, runway, and break-even calculations
 - ✅ Funding requirement estimation
@@ -555,6 +586,7 @@ Real, named, usable capabilities — not just analysis categories. This is what 
 - ✅ Auto-generated pitch decks, investor reports, and financial reports
 
 ### ⚖️ Legal Document Generator
+
 - ✅ Privacy Policy draft
 - ✅ Terms of Service draft
 - ✅ Founder Agreement draft
@@ -562,11 +594,13 @@ Real, named, usable capabilities — not just analysis categories. This is what 
 - ✅ Mentor and domain-expert recommendations
 
 ### 📤 Reporting & Export
+
 - ✅ One-click professional report generation via ReportForge
 - ✅ Export to PDF, DOCX, and PPTX
 - ✅ Executive Summary, Market Report, Competitor Report, SWOT, Financial Report, Investor Report, Pitch Deck — all bundled together
 
 ### ⚙️ Platform-Level Capabilities
+
 - ✅ **Parallel multi-agent execution** for fast turnaround instead of sequential processing
 - ✅ **Shared context engine** — agents build on each other's outputs instead of duplicating work
 - ✅ **Single unified report** instead of fragmented, disconnected outputs
