@@ -29,59 +29,6 @@ Many aspiring entrepreneurs fail not because they lack ambition, but because the
 
 ---
 
-## 🛠️ Tech Stack
-
-<table>
-<tr>
-<td valign="top" width="50%">
-
-**Frontend**
-
-- React
-- React Router
-- Redux Toolkit
-- Tailwind CSS
-- Recharts
-
-**Backend**
-
-- Spring Boot
-- Spring Security
-- JWT Authentication
-- REST APIs
-
-**Database**
-
-- PostgreSQL (Supabase)
-
-</td>
-<td valign="top" width="50%">
-
-**Authentication**
-
-- Supabase Auth
-
-**Storage**
-
-- Supabase Storage
-
-**AI**
-
-- Gemini API
-- OpenAI API
-
-**Deployment**
-
-- Frontend: Vercel
-- Backend: Render / Railway
-- Database: Supabase
-
-</td>
-</tr>
-</table>
-
----
-
 ## 💡 Why It Matters — For Founders, First
 
 This section is the heart of SIVP. Everything else is implementation detail. **This is the "why."**
