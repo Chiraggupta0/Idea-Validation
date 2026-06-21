@@ -1,6 +1,5 @@
-<div align="center">
-#  Startup Idea Validation Platform (SIVP)
-</div>
+
+# Startup Idea Validation Platform (SIVP)
 
 ---
 
