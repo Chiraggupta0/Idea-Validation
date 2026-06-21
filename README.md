@@ -1,7 +1,7 @@
 <div align="center">
 
-# 🚀 AI Startup Co-Founder Platform
-### Multi-Agent Startup Intelligence & Validation System
+# 🚀 Startup Idea Validation Platform (SIVP)
+### Multi-Agent AI-Powered Startup Intelligence & Validation System
 
 **The AI co-founder that answers the only question that matters:**
 > *"I have a startup idea. Should I build it, how should I build it, how can I grow it, and how can I get funding?"*
@@ -15,23 +15,81 @@
 
 ---
 
-## 🧠 What Is This?
+## 📋 Project Overview
 
-This is a **multi-agent AI system** that takes a single raw startup idea and turns it into a complete, investor-ready business — validated, researched, planned, priced, and pitched.
+**Startup Idea Validation Platform (SIVP)** is an AI-powered web application that helps entrepreneurs evaluate whether their startup idea has real market potential — before they invest time and money building it.
 
-Instead of a founder spending **weeks** juggling market research, competitor spreadsheets, pricing models, pitch decks, and funding strategy across a dozen disconnected tools, this platform runs **10 specialized AI agents** in coordinated parallel — each an expert in one piece of the startup journey — and stitches their outputs into a single, polished, professional report.
-
-Think of it as hiring a **startup analyst, market researcher, competitive strategist, CFO, growth marketer, legal assistant, and pitch coach** — simultaneously, in minutes, for free.
+SIVP acts as a **virtual business consultant**. It analyzes a startup idea, identifies competitors, performs a SWOT analysis, estimates market demand, suggests revenue models, and generates an **Investor Readiness Score** — all within minutes.
 
 ```
-Your Idea  →  10 AI Agents  →  Validated Plan + Market Data + Financials + Pitch Deck
+Your Idea  →  SIVP's 10 AI Agents  →  Validated Plan + Market Data + Financials + Investor Readiness Score
 ```
+
+---
+
+## ❗ Problem Statement
+
+Many aspiring entrepreneurs fail not because they lack ambition, but because they:
+
+- ❌ Build products nobody actually wants
+- ❌ Enter overcrowded, oversaturated markets
+- ❌ Lack proper competitor research
+- ❌ Have unclear or unviable revenue models
+- ❌ Cannot present their ideas effectively to investors
+
+**SIVP solves these problems by providing AI-generated business insights within minutes** — replacing guesswork with data, and replacing expensive consultants with an always-available AI analysis team.
+
+---
+
+## 🛠️ Tech Stack
+
+<table>
+<tr>
+<td valign="top" width="50%">
+
+**Frontend**
+- React
+- React Router
+- Redux Toolkit
+- Tailwind CSS
+- Recharts
+
+**Backend**
+- Spring Boot
+- Spring Security
+- JWT Authentication
+- REST APIs
+
+**Database**
+- PostgreSQL (Supabase)
+
+</td>
+<td valign="top" width="50%">
+
+**Authentication**
+- Supabase Auth
+
+**Storage**
+- Supabase Storage
+
+**AI**
+- Gemini API
+- OpenAI API
+
+**Deployment**
+- Frontend: Vercel
+- Backend: Render / Railway
+- Database: Supabase
+
+</td>
+</tr>
+</table>
 
 ---
 
 ## 💡 Why It Matters — For Founders, First
 
-This section is the heart of the platform. Everything else is implementation detail. **This is the "why."**
+This section is the heart of SIVP. Everything else is implementation detail. **This is the "why."**
 
 ### The problem every first-time founder faces
 
@@ -50,7 +108,7 @@ You have an idea. You're excited. And then reality hits:
 
 Most founders either **freeze** under the weight of these questions, **guess** and waste months building the wrong thing, or **pay consultants** thousands of dollars for answers that should be a starting point, not a luxury.
 
-### How this platform changes that
+### How SIVP changes that
 
 | For a first-time founder, this gives you... | Instead of... |
 |---|---|
@@ -73,15 +131,65 @@ Most founders either **freeze** under the weight of these questions, **guess** a
 - 💼 **Early-stage founders preparing for investor meetings** who need data, not just confidence
 - 🌱 **Anyone with "just an idea"** who wants an honest, data-backed answer before committing time and money
 
-> **The single biggest value of this platform:** it replaces *months of scattered uncertainty* with a *single afternoon of structured clarity.*
+> **The single biggest value of SIVP:** it replaces *months of scattered uncertainty* with a *single afternoon of structured clarity.*
+
+---
+
+## 🧱 Core Modules (Before the Agents)
+
+Before any AI agent runs, SIVP is built on two foundational modules that every user passes through.
+
+### Module 1 — Authentication & Authorization
+
+SIVP supports **role-based access** across four distinct user types:
+
+| Role | Access & Purpose |
+|---|---|
+| 👤 **Founder** | Submits startup ideas, views validation reports, tracks their own progress |
+| 🧑‍🏫 **Mentor** | Reviews assigned founders, provides feedback, schedules check-ins |
+| 🏢 **Incubator Admin** | Manages a cohort of startups, assigns mentors, monitors milestones across founders |
+| 🛡️ **Super Admin** | Full platform oversight — manages users, roles, incubators, and system configuration |
+
+**Implementation:**
+- Secure sign-up/login via **Supabase Auth**
+- **JWT-based authentication** issued and validated by the **Spring Boot + Spring Security** backend
+- **Role-Based Access Control (RBAC)** — each role sees a different dashboard and has different permissions
+- Protected REST API routes per role
+- Session management and token refresh handled securely end-to-end
+
+---
+
+### Module 2 — Idea Submission
+
+Once authenticated, a founder submits their startup idea through a structured intake form. This structured input is what feeds every downstream AI agent — the more precise this module is, the sharper every subsequent analysis becomes.
+
+**Fields captured:**
+- 🏷️ **Startup Name**
+- 🏭 **Industry**
+- ❓ **Problem Statement**
+- 💡 **Solution**
+- 🎯 **Target Audience**
+- 🌍 **Geographic Market**
+- 📝 **Description**
+
+This data is stored securely (PostgreSQL via Supabase) and passed to **NEXUS**, which dispatches it to the relevant agents for analysis.
 
 ---
 
 ## ⚙️ How It Works
 
-The platform is built as a coordinated team of **10 specialized agents**, orchestrated by a central conductor.
+SIVP is built as a coordinated team of **10 specialized agents**, orchestrated by a central conductor — sitting on top of the Authentication and Idea Submission modules above.
 
 ```
+        Module 1: Authentication & Authorization
+        (Founder · Mentor · Incubator Admin · Super Admin)
+                            │
+                            ▼
+        Module 2: Idea Submission
+        (Startup Name · Industry · Problem · Solution ·
+         Target Audience · Geographic Market · Description)
+                            │
+                            ▼
                       NEXUS (Master Orchestrator)
                                 │
                             VisionAI
@@ -118,14 +226,15 @@ The platform is built as a coordinated team of **10 specialized agents**, orches
 
 ### The Flow
 
-1. **You submit your idea** — a few sentences is enough.
-2. **VisionAI** breaks it down and gives you a first honest read: is the problem real, and is it worth pursuing?
-3. **MarketMind, RivalScope, and BuildIQ** run in parallel — sizing the market, scanning competitors, and shaping your business model simultaneously.
-4. **SWOTify** synthesizes everything so far into a clean strengths/weaknesses/opportunities/threats view.
-5. **FundIQ and GrowthIQ** layer in financials, funding strategy, and a growth plan, with **MentorAI** surfacing real-world support (mentors, grants, legal templates).
-6. **IncubaTrack** keeps a living record of your progress from idea to funding.
-7. **ReportForge** compiles everything into one clean, exportable report — ready to send to an investor, a mentor, or your incubator.
-8. **NEXUS** coordinates the entire pipeline behind the scenes — managing execution order, sharing context between agents, and handling errors so you only ever see one clean result.
+1. **Sign up / log in** through Module 1, with your role (Founder, Mentor, Incubator Admin, or Super Admin) determining what you see next.
+2. **Submit your idea** through Module 2 — startup name, industry, problem statement, solution, target audience, geographic market, and description.
+3. **VisionAI** breaks it down and gives you a first honest read: is the problem real, and is it worth pursuing?
+4. **MarketMind, RivalScope, and BuildIQ** run in parallel — sizing the market, scanning competitors, and shaping your business model simultaneously.
+5. **SWOTify** synthesizes everything so far into a clean strengths/weaknesses/opportunities/threats view.
+6. **FundIQ and GrowthIQ** layer in financials, funding strategy, and a growth plan, with **MentorAI** surfacing real-world support (mentors, grants, legal templates).
+7. **IncubaTrack** keeps a living record of your progress from idea to funding.
+8. **ReportForge** compiles everything into one clean, exportable report — ready to send to an investor, a mentor, or your incubator.
+9. **NEXUS** coordinates the entire pipeline behind the scenes — managing execution order, sharing context between agents, and handling errors so you only ever see one clean result.
 
 ---
 
@@ -242,6 +351,35 @@ This is the investor-facing intelligence layer.
 
 ---
 
+#### 📊 Step 7: Investor Readiness Score — Full Breakdown
+
+The Investor Readiness Score is FundIQ's signature output — a single, weighted, 0–100 score that tells a founder (and an investor) exactly how fundable the startup is right now.
+
+**Score Calculation**
+
+| Metric | Weight |
+|---|---|
+| Market Potential | 25% |
+| Competition Level | 20% |
+| Revenue Potential | 20% |
+| Scalability | 20% |
+| Innovation Score | 15% |
+
+**Final Score Example:** `82/100`
+
+**Score Categories**
+
+| Range | Category |
+|---|---|
+| 0 – 40 | 🔴 Weak |
+| 41 – 60 | 🟠 Moderate |
+| 61 – 80 | 🟡 Good |
+| 81 – 100 | 🟢 Investor Ready |
+
+Each metric is calculated using inputs already produced upstream by other agents — Market Potential and Competition Level draw from **MarketMind** and **RivalScope**, Revenue Potential and Scalability draw from **BuildIQ** and **GrowthIQ**, and Innovation Score draws from **VisionAI**'s idea uniqueness check. This is the clearest example of why agents share context through NEXUS rather than running in isolation.
+
+---
+
 ### 8️⃣ MentorAI
 **Question Solved:** *"Who can help me execute this startup?"*
 
@@ -323,7 +461,7 @@ Final Report
 
 ## 🌟 Full Feature List
 
-Real, named, usable capabilities — not just analysis categories. This is what the platform actually surfaces for a founder.
+Real, named, usable capabilities — not just analysis categories. This is what SIVP actually surfaces for a founder.
 
 ### 🏛️ Government Schemes & Funding Database
 - ✅ **Startup India Seed Fund Scheme (SISFS) matcher** — checks DPIIT-recognition eligibility and estimates qualification for the grant + convertible-debt component
@@ -437,45 +575,6 @@ Real, named, usable capabilities — not just analysis categories. This is what 
 - ✅ **Incubator/accelerator-ready** with multi-founder, multi-cohort tracking
 - ✅ **Re-runnable at any stage** — revisit validation, market sizing, or financials as your idea evolves
 
-
-
----
-
-## 🗂️ Full Problem → Agent Mapping
-
-<details>
-<summary>Click to expand the complete mapping of startup challenges to agents</summary>
-
-| Startup Challenge | Handled By |
-|---|---|
-| Idea Validation | VisionAI |
-| Market Research | MarketMind |
-| Competitor Analysis | RivalScope |
-| Revenue Model | BuildIQ |
-| Pricing | BuildIQ |
-| Customer Identification | VisionAI |
-| Product-Market Fit | VisionAI |
-| SWOT Analysis | SWOTify |
-| Team Building | BuildIQ |
-| Funding | FundIQ |
-| Investor Readiness | FundIQ |
-| Pitch Deck | FundIQ + ReportForge |
-| Marketing | GrowthIQ |
-| Financial Planning | FundIQ |
-| Burn Rate | FundIQ |
-| Legal | MentorAI |
-| Government Schemes | MentorAI |
-| Mentorship | MentorAI |
-| Startup Roadmap | BuildIQ |
-| Failure Risk | FundIQ |
-| Success Prediction | FundIQ |
-| Scaling | GrowthIQ |
-| Incubation Tracking | IncubaTrack |
-| Orchestration & Coordination | NEXUS |
-| Final Reporting | ReportForge |
-
-</details>
-
 ---
 
 ## ✨ Why This Architecture (Not 22 Separate Tools)
@@ -521,6 +620,6 @@ Early on, this system could have been built as 22 disconnected single-purpose to
 
 ### Built for the founder who has an idea — and needs the truth before the funding.
 
-**This platform turns "I have an idea" into "I have a plan."**
+**SIVP turns "I have an idea" into "I have a plan."**
 
 </div>
