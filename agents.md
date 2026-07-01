@@ -52,10 +52,10 @@ Description: {{ $json.description }}
 | # | Agent | Question | Depends on | Status |
 |---|-------|----------|-----------|--------|
 | 1 | VisionAI | Is the idea worth pursuing? | idea | ✅ built |
-| 2 | MarketMind | Is the market big enough? | idea | ⬜ |
-| 3 | RivalScope | Who are competitors & how to beat them? | idea | ⬜ |
-| 4 | BuildIQ | What to build & how to monetize? | idea | ⬜ |
-| 5 | SWOTify | Strengths/weaknesses/opps/threats? | 1,2,3,4 | ⬜ |
+| 2 | MarketMind | Is the market big enough? | idea | ✅ built |
+| 3 | RivalScope | Who are competitors & how to beat them? | idea | ✅ built |
+| 4 | BuildIQ | What to build & how to monetize? | idea | ✅ built |
+| 5 | SWOTify | Strengths/weaknesses/opps/threats? | 1,2,3,4 | ✅ built |
 | 6 | GrowthIQ | How to get customers & scale? | idea | ⬜ |
 | 7 | FundIQ | Can it attract investment? | 2,3,4,6 + 1 | ⬜ |
 | 8 | MentorAI | Who can help execute it? | idea | ⬜ |
