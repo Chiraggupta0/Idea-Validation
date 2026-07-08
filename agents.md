@@ -47,6 +47,13 @@ Description: {{ $json.description }}
 
 ---
 
+## Gemini free-tier gotchas
+
+- **Model:** use `gemini-2.5-flash`. Do NOT use `gemini-2.0-flash` — it has **0 free-tier quota** (429 "limit: 0").
+- **`Cannot read properties of undefined (reading 'parts')`** = the model returned an empty response, usually because the **output was too large** (2.5-flash's hidden "thinking" tokens exhaust the budget). Fix by keeping outputs concise (e.g. MentorAI legal docs = 1–2 line summaries, not full drafts).
+- **`Service unavailable` (503)** = transient overload → **Retry On Fail** on the AI Agent node handles it.
+- **`429 Too Many Requests`** = per-minute or per-day free-tier cap. Wait, use a fresh API key/project, or enable billing (Flash is ~fractions of a cent/call).
+
 ## Build status
 
 | # | Agent | Question | Depends on | Status |
@@ -56,11 +63,11 @@ Description: {{ $json.description }}
 | 3 | RivalScope | Who are competitors & how to beat them? | idea | ✅ built |
 | 4 | BuildIQ | What to build & how to monetize? | idea | ✅ built |
 | 5 | SWOTify | Strengths/weaknesses/opps/threats? | 1,2,3,4 | ✅ built |
-| 6 | GrowthIQ | How to get customers & scale? | idea | ⬜ |
-| 7 | FundIQ | Can it attract investment? | 2,3,4,6 + 1 | ⬜ |
-| 8 | MentorAI | Who can help execute it? | idea | ⬜ |
-| 9 | IncubaTrack | How to track idea → funding? | pipeline | ⬜ |
-| 10 | ReportForge | One professional report | all | ⬜ |
+| 6 | GrowthIQ | How to get customers & scale? | idea | ✅ built |
+| 7 | FundIQ | Can it attract investment? | 2,3,4,6 + 1 | ✅ built |
+| 8 | MentorAI | Who can help execute it? | idea | ✅ built |
+| 9 | IncubaTrack | How to track idea → funding? | pipeline | ✅ built |
+| 10 | ReportForge | One professional report | all | ✅ built |
 
 ---
 
@@ -371,9 +378,9 @@ Do all of the following:
 - Mentorship: recommend the kinds of mentors and domain experts this founder needs.
 - Government Support: relevant Indian schemes (e.g. Startup India / SISFS, MSME/Udyam, MUDRA, CGSS, sector grants like BIRAC/MeitY/DST/AIM), with the benefit and rough eligibility for each.
 - Ecosystem: relevant incubators and accelerators (types/examples).
-- Legal Assistance: short drafts/outlines for Privacy Policy, Terms of Service, Founder Agreement, and NDA.
+- Legal Assistance: for Privacy Policy, Terms of Service, Founder Agreement, and NDA, give only a 1–2 line summary of what each should cover (not a full draft).
 
-Only mention schemes that plausibly fit this idea and stage. Mark scheme details as "verify current eligibility" since rules change. Legal drafts are starting points, not legal advice. Keep entries concise.
+Only mention schemes that plausibly fit this idea and stage. Mark scheme details as "verify current eligibility" since rules change. Keep every entry short.
 ```
 
 **Output schema**
