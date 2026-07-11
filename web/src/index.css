@@ -1,0 +1,177 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+:root {
+  --cream: #f2eee3;
+  --cream-2: #ede8da;
+  --neu-bg: #ece7da;
+  --ink: #141414;
+  --ink-soft: #3a3a3a;
+  --muted: #6b6b6b;
+  --blue: #4a3dff;
+  --blue-2: #2a1fd6;
+  --blue-shadow: #14106b;
+  --yellow: #ffd84d;
+  --neu-dark: #c8c3b4;
+  --neu-light: #ffffff;
+  --neu-track: #dfdac9;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- Brutalism (the bones) ---------- */
+.brutal {
+  border: 2px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+  background: #fff;
+}
+.brutal-sm {
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  background: #fff;
+}
+.brutal-flat {
+  border: 2px solid var(--ink);
+  background: #fff;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+  text-transform: uppercase;
+}
+
+/* ---------- Skeuomorphism (buttons) ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border: 2.5px solid var(--ink);
+  border-radius: 10px;
+  user-select: none;
+  text-decoration: none;
+  transition:
+    transform 0.05s ease,
+    box-shadow 0.05s ease;
+}
+.btn:active {
+  transform: translateY(4px);
+}
+.btn-primary {
+  background: linear-gradient(180deg, #5a4dff, var(--blue-2));
+  color: #fff;
+  box-shadow:
+    0 6px 0 var(--blue-shadow),
+    0 8px 12px rgba(0, 0, 0, 0.25),
+    inset 0 2px 0 rgba(255, 255, 255, 0.5);
+}
+.btn-primary:active {
+  box-shadow:
+    0 2px 0 var(--blue-shadow),
+    inset 0 2px 0 rgba(255, 255, 255, 0.5);
+}
+.btn-light {
+  background: linear-gradient(180deg, #ffffff, #e6e2d5);
+  color: var(--ink);
+  box-shadow:
+    0 6px 0 var(--ink),
+    inset 0 2px 0 rgba(255, 255, 255, 0.9);
+}
+.btn-light:active {
+  box-shadow:
+    0 2px 0 var(--ink),
+    inset 0 2px 0 rgba(255, 255, 255, 0.9);
+}
+.btn-lg {
+  padding: 0.9rem 1.6rem;
+  font-size: 0.95rem;
+}
+.btn-md {
+  padding: 0.7rem 1.2rem;
+  font-size: 0.82rem;
+}
+.btn-sm {
+  padding: 0.5rem 0.85rem;
+  font-size: 0.72rem;
+  border-radius: 8px;
+  border-width: 2px;
+  box-shadow:
+    0 4px 0 var(--ink),
+    inset 0 2px 0 rgba(255, 255, 255, 0.9);
+}
+.btn-sm:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 1px 0 var(--ink),
+    inset 0 2px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* ---------- Glassmorphism (floating nav / tabs / menu) ---------- */
+.glass {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(20, 20, 20, 0.9);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* ---------- Neumorphism (charts / score panels) ---------- */
+.neu {
+  background: var(--neu-bg);
+  border-radius: 20px;
+  box-shadow:
+    7px 7px 15px var(--neu-dark),
+    -7px -7px 15px var(--neu-light);
+}
+.neu-sm {
+  background: var(--neu-bg);
+  border-radius: 16px;
+  box-shadow:
+    6px 6px 12px var(--neu-dark),
+    -6px -6px 12px var(--neu-light);
+}
+.neu-track {
+  background: var(--neu-track);
+  border-radius: 6px;
+  box-shadow:
+    inset 2px 2px 4px var(--neu-dark),
+    inset -2px -2px 4px var(--neu-light);
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: var(--blue);
+}
