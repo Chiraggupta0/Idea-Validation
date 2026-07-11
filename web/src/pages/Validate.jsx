@@ -4,9 +4,8 @@ import { ArrowRight, Loader2 } from 'lucide-react'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
 import { AGENTS } from '../lib/agents'
-import type { IdeaInput } from '../lib/types'
 
-const FIELDS: { key: keyof IdeaInput; label: string; textarea?: boolean; ph: string }[] = [
+const FIELDS = [
   { key: 'startupName', label: 'Startup name', ph: 'PawPair' },
   { key: 'industry', label: 'Industry (optional — we detect it)', ph: 'Leave blank to auto-detect' },
   { key: 'problemStatement', label: 'Problem statement', textarea: true, ph: 'What painful problem are you solving?' },
@@ -16,7 +15,7 @@ const FIELDS: { key: keyof IdeaInput; label: string; textarea?: boolean; ph: str
   { key: 'description', label: 'Description', textarea: true, ph: 'One or two lines about the product.' },
 ]
 
-const EMPTY: IdeaInput = {
+const EMPTY = {
   startupName: '', industry: '', problemStatement: '', solution: '',
   targetAudience: '', geographicMarket: '', description: '',
 }
@@ -25,13 +24,13 @@ const inputCls =
   'w-full brutal-flat bg-white px-4 py-3 text-sm text-[var(--ink)] outline-none focus:shadow-[3px_3px_0_var(--blue)] placeholder:text-[var(--muted)]'
 
 export default function Validate() {
-  const [idea, setIdea] = useState<IdeaInput>(EMPTY)
+  const [idea, setIdea] = useState(EMPTY)
   const [busy, setBusy] = useState(false)
   const nav = useNavigate()
 
-  const set = (k: keyof IdeaInput, v: string) => setIdea((p) => ({ ...p, [k]: v }))
+  const set = (k, v) => setIdea((p) => ({ ...p, [k]: v }))
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e) {
     e.preventDefault()
     setBusy(true)
     // TODO: POST idea to Spring Boot: `/api/validate` -> n8n webhook -> report.

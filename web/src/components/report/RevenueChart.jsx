@@ -1,7 +1,6 @@
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
-import type { RevenuePoint } from '../../lib/types'
 
-export default function RevenueChart({ data }: { data: RevenuePoint[] }) {
+export default function RevenueChart({ data }) {
   return (
     <div className="neu p-5">
       <div className="mb-4 text-xs font-bold uppercase tracking-wide">Revenue forecast · FundIQ ($K)</div>
@@ -17,7 +16,7 @@ export default function RevenueChart({ data }: { data: RevenuePoint[] }) {
           <YAxis tick={{ fill: '#6b6b6b', fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip
             contentStyle={{ border: '2px solid #141414', borderRadius: 8, fontSize: 12 }}
-            formatter={((v: number) => [`$${v}K`, 'Revenue']) as never}
+            formatter={(v) => [`$${v}K`, 'Revenue']}
           />
           <Area type="monotone" dataKey="revenue" stroke="#4a3dff" strokeWidth={2.5} fill="url(#rev)" />
         </AreaChart>

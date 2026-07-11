@@ -10,7 +10,7 @@ import { SAMPLE_REPORT as r } from '../lib/sampleReport'
 
 const TABS = ['Overview', 'Market', 'Financials', 'SWOT']
 
-function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function Stat({ label, value, sub }) {
   return (
     <div className="neu-sm p-4">
       <div className="text-xs font-medium text-[var(--muted)]">{label}</div>

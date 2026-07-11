@@ -1,13 +1,11 @@
-import type { Swot } from '../../lib/types'
-
-const QUADS: { key: keyof Swot; label: string; highlight?: boolean }[] = [
+const QUADS = [
   { key: 'strengths', label: 'Strengths' },
   { key: 'weaknesses', label: 'Weaknesses' },
   { key: 'opportunities', label: 'Opportunities' },
   { key: 'threats', label: 'Threats', highlight: true },
 ]
 
-export default function SwotGrid({ swot }: { swot: Swot }) {
+export default function SwotGrid({ swot }) {
   return (
     <div>
       <div className="eyebrow mb-3">// SWOT · SWOTify</div>

@@ -1,10 +1,4 @@
-export default function ScoreGauge({
-  score,
-  category,
-}: {
-  score: number
-  category: string
-}) {
+export default function ScoreGauge({ score, category }) {
   const r = 56
   const circ = 2 * Math.PI * r
   const dash = (score / 100) * circ

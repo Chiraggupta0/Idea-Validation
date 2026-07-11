@@ -1,12 +1,4 @@
-import type { ScoreMetric } from '../../lib/types'
-
-export function MarketBars({
-  rows,
-  note,
-}: {
-  rows: { label: string; value: string; pct: number }[]
-  note: string
-}) {
+export function MarketBars({ rows, note }) {
   return (
     <div className="neu p-5">
       <div className="mb-4 text-xs font-bold uppercase tracking-wide">Market size · MarketMind</div>
@@ -26,7 +18,7 @@ export function MarketBars({
   )
 }
 
-export function ScoreBreakdown({ rows }: { rows: ScoreMetric[] }) {
+export function ScoreBreakdown({ rows }) {
   return (
     <div className="neu p-5">
       <div className="mb-4 text-xs font-bold uppercase tracking-wide">Score breakdown · FundIQ</div>

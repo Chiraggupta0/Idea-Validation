@@ -19,7 +19,7 @@ import FadeUp from '../components/FadeUp'
 import SkeuoButton from '../components/SkeuoButton'
 import { AGENTS } from '../lib/agents'
 
-const ICONS: Record<string, typeof Eye> = {
+const ICONS = {
   Eye, BarChart3, Swords, Wrench, LayoutGrid, TrendingUp, Landmark, Users, GitBranch, FileText,
 }
 
