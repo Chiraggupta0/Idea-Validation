@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Download } from 'lucide-react'
 import GlassNav from '../components/GlassNav'
 import Footer from '../components/Footer'
@@ -6,7 +7,7 @@ import ScoreGauge from '../components/report/ScoreGauge'
 import { MarketBars, ScoreBreakdown } from '../components/report/Bars'
 import RevenueChart from '../components/report/RevenueChart'
 import SwotGrid from '../components/report/SwotGrid'
-import { SAMPLE_REPORT as r } from '../lib/sampleReport'
+import { SAMPLE_REPORT } from '../lib/sampleReport'
 
 const TABS = ['Overview', 'Market', 'Financials', 'SWOT']
 
@@ -21,6 +22,25 @@ function Stat({ label, value, sub }) {
 }
 
 export default function Report() {
+  const [report, setReport] = useState(SAMPLE_REPORT)
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('sivpReport')
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        // Use live report if it has the expected shape, otherwise fall back
+        if (parsed.startupName && parsed.scoreBreakdown) {
+          setReport(parsed)
+          sessionStorage.removeItem('sivpReport') // Clean up after reading
+        }
+      } catch (e) {
+        console.error('Failed to parse stored report:', e)
+      }
+    }
+  }, [])
+
+  const r = report
   return (
     <div className="min-h-screen" style={{ background: 'var(--neu-bg)' }}>
       <GlassNav />

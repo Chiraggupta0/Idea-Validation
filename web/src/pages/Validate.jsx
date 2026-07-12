@@ -33,10 +33,20 @@ export default function Validate() {
   async function submit(e) {
     e.preventDefault()
     setBusy(true)
-    // TODO: POST idea to Spring Boot: `/api/validate` -> n8n webhook -> report.
-    // For now we simulate the pipeline latency, then show the sample report.
-    await new Promise((r) => setTimeout(r, 2200))
-    nav('/report')
+    try {
+      const res = await fetch('http://localhost:8080/api/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(idea),
+      })
+      if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`)
+      const report = await res.json()
+      sessionStorage.setItem('sivpReport', JSON.stringify(report))
+      nav('/report')
+    } catch (err) {
+      alert(`Validation failed: ${err.message}\n\nMake sure Spring Boot is running on :8080`)
+      setBusy(false)
+    }
   }
 
   if (busy) {
