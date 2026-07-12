@@ -15,17 +15,20 @@ building each agent in n8n.
 ```
 
 **To build a new agent, duplicate an existing one and change only two things:**
+
 1. The **System Message** (AI Agent → Options → System Message).
 2. The **JSON Example** (Structured Output Parser → Schema Type = "Generate From JSON Example").
 
 The trigger, the idea input (Edit Fields), and the Gemini connection carry over unchanged.
 
 ### The idea input (Edit Fields) — shared by all agents
+
 Seven fields from Module 2 (Idea Submission):
 `startupName`, `industry`, `problemStatement`, `solution`, `targetAudience`,
 `geographicMarket`, `description`.
 
 ### The AI Agent user prompt (shared)
+
 ```
 Analyze this startup idea.
 
@@ -39,6 +42,7 @@ Description: {{ $json.description }}
 ```
 
 ### Two kinds of agents
+
 - **Idea-only** — run on the 7 idea fields alone: VisionAI, MarketMind, RivalScope,
   BuildIQ, GrowthIQ, MentorAI.
 - **Needs upstream context** — must also receive earlier agents' JSON output (wired in by
@@ -56,24 +60,25 @@ Description: {{ $json.description }}
 
 ## Build status
 
-| # | Agent | Question | Depends on | Status |
-|---|-------|----------|-----------|--------|
-| 1 | VisionAI | Is the idea worth pursuing? | idea | ✅ built |
-| 2 | MarketMind | Is the market big enough? | idea | ✅ built |
-| 3 | RivalScope | Who are competitors & how to beat them? | idea | ✅ built |
-| 4 | BuildIQ | What to build & how to monetize? | idea | ✅ built |
-| 5 | SWOTify | Strengths/weaknesses/opps/threats? | 1,2,3,4 | ✅ built |
-| 6 | GrowthIQ | How to get customers & scale? | idea | ✅ built |
-| 7 | FundIQ | Can it attract investment? | 2,3,4,6 + 1 | ✅ built |
-| 8 | MentorAI | Who can help execute it? | idea | ✅ built |
-| 9 | IncubaTrack | How to track idea → funding? | pipeline | ✅ built |
-| 10 | ReportForge | One professional report | all | ✅ built |
+| #   | Agent       | Question                                | Depends on  | Status   |
+| --- | ----------- | --------------------------------------- | ----------- | -------- |
+| 1   | VisionAI    | Is the idea worth pursuing?             | idea        | ✅ built |
+| 2   | MarketMind  | Is the market big enough?               | idea        | ✅ built |
+| 3   | RivalScope  | Who are competitors & how to beat them? | idea        | ✅ built |
+| 4   | BuildIQ     | What to build & how to monetize?        | idea        | ✅ built |
+| 5   | SWOTify     | Strengths/weaknesses/opps/threats?      | 1,2,3,4     | ✅ built |
+| 6   | GrowthIQ    | How to get customers & scale?           | idea        | ✅ built |
+| 7   | FundIQ      | Can it attract investment?              | 2,3,4,6 + 1 | ✅ built |
+| 8   | MentorAI    | Who can help execute it?                | idea        | ✅ built |
+| 9   | IncubaTrack | How to track idea → funding?            | pipeline    | ✅ built |
+| 10  | ReportForge | One professional report                 | all         | ✅ built |
 
 ---
 
-## 1. VisionAI — Idea Validation  ✅
+## 1. VisionAI — Idea Validation ✅
 
 **System Message**
+
 ```
 You are VisionAI, the first agent in the SIVP startup-validation pipeline. Your job: judge whether a startup idea is worth pursuing, using only the structured idea provided.
 
@@ -88,6 +93,7 @@ Be honest and specific, not flattering. Base everything on the idea given — ne
 ```
 
 **Output schema**
+
 ```json
 {
   "industry": "string",
@@ -110,6 +116,7 @@ Be honest and specific, not flattering. Base everything on the idea given — ne
 ## 2. MarketMind — Market Research
 
 **System Message**
+
 ```
 You are MarketMind, the market-research agent in the SIVP startup-validation pipeline. Your job: determine whether the market for this idea is large enough to be worth pursuing, using the structured idea provided.
 
@@ -124,6 +131,7 @@ Base reasoning on the idea and general market knowledge. Always label figures as
 ```
 
 **Output schema**
+
 ```json
 {
   "industryOverview": "string",
@@ -148,6 +156,7 @@ Base reasoning on the idea and general market knowledge. Always label figures as
 ## 3. RivalScope — Competitor Analysis
 
 **System Message**
+
 ```
 You are RivalScope, the competitor-analysis agent in the SIVP startup-validation pipeline. Your job: map the competitive landscape and find how this startup can differentiate, using the structured idea provided.
 
@@ -161,10 +170,17 @@ Be realistic and specific. Do not invent fake company names as if they were conf
 ```
 
 **Output schema**
+
 ```json
 {
   "directCompetitors": [
-    { "name": "string", "description": "string", "strengths": "string", "weaknesses": "string", "pricing": "string" }
+    {
+      "name": "string",
+      "description": "string",
+      "strengths": "string",
+      "weaknesses": "string",
+      "pricing": "string"
+    }
   ],
   "indirectCompetitors": ["string"],
   "featureComparison": "string",
@@ -181,6 +197,7 @@ Be realistic and specific. Do not invent fake company names as if they were conf
 ## 4. BuildIQ — Business Model & Product Plan
 
 **System Message**
+
 ```
 You are BuildIQ, the business-model agent in the SIVP startup-validation pipeline. Your job: turn the idea into an executable business and product plan, using the structured idea provided.
 
@@ -196,6 +213,7 @@ Be practical and specific to this idea and market. Keep text fields concise.
 ```
 
 **Output schema**
+
 ```json
 {
   "valueProposition": "string",
@@ -221,10 +239,11 @@ Be practical and specific to this idea and market. Keep text fields concise.
 
 ---
 
-## 5. SWOTify — SWOT Synthesis  *(needs upstream: VisionAI + MarketMind + RivalScope + BuildIQ)*
+## 5. SWOTify — SWOT Synthesis _(needs upstream: VisionAI + MarketMind + RivalScope + BuildIQ)_
 
 For this agent, the AI Agent user prompt should paste in the JSON outputs of agents 1–4
 (NEXUS supplies them). Example prompt addition:
+
 ```
 Using these upstream analyses, produce a SWOT.
 VisionAI: {{ $json.visionAI }}
@@ -234,6 +253,7 @@ BuildIQ: {{ $json.buildIQ }}
 ```
 
 **System Message**
+
 ```
 You are SWOTify, the synthesis agent in the SIVP startup-validation pipeline. Your job: combine the upstream analyses (idea validation, market, competitors, business model) into one clean SWOT.
 
@@ -247,6 +267,7 @@ Only use what the upstream analyses support — do not introduce new invented fa
 ```
 
 **Output schema**
+
 ```json
 {
   "strengths": ["string"],
@@ -262,6 +283,7 @@ Only use what the upstream analyses support — do not introduce new invented fa
 ## 6. GrowthIQ — Go-To-Market & Growth
 
 **System Message**
+
 ```
 You are GrowthIQ, the growth agent in the SIVP startup-validation pipeline. Your job: plan how this startup acquires customers and scales, using the structured idea provided.
 
@@ -276,6 +298,7 @@ Be specific and realistic for this idea, market, and budget stage. Keep text fie
 ```
 
 **Output schema**
+
 ```json
 {
   "launchPlan": "string",
@@ -299,10 +322,11 @@ Be specific and realistic for this idea, market, and budget stage. Keep text fie
 
 ---
 
-## 7. FundIQ — Financials & Investor Readiness  *(needs upstream scores)*
+## 7. FundIQ — Financials & Investor Readiness _(needs upstream scores)_
 
 The user prompt should paste in the relevant upstream scores so the Investor Readiness Score
 can be computed from real inputs:
+
 ```
 Idea + these upstream signals:
 MarketMind.opportunityScore: {{ $json.opportunityScore }}
@@ -324,6 +348,7 @@ VisionAI (innovation/uniqueness): {{ $json.ideaUniqueness }} / validationScore {
 Categories: 0–40 Weak · 41–60 Moderate · 61–80 Good · 81–100 Investor Ready.
 
 **System Message**
+
 ```
 You are FundIQ, the investor-readiness agent in the SIVP startup-validation pipeline. Your job: assess whether this startup can attract investment and become profitable, using the idea plus the upstream scores provided.
 
@@ -339,6 +364,7 @@ Never present invented numbers as precise facts — label all figures as estimat
 ```
 
 **Output schema**
+
 ```json
 {
   "revenueForecast": "string",
@@ -368,9 +394,10 @@ Never present invented numbers as precise facts — label all figures as estimat
 
 ---
 
-## 8. MentorAI — Ecosystem & Legal Support  *(India-focused)*
+## 8. MentorAI — Ecosystem & Legal Support _(India-focused)_
 
 **System Message**
+
 ```
 You are MentorAI, the ecosystem-support agent in the SIVP startup-validation pipeline. Your job: surface real-world support for executing this startup in India, using the structured idea provided.
 
@@ -384,6 +411,7 @@ Only mention schemes that plausibly fit this idea and stage. Mark scheme details
 ```
 
 **Output schema**
+
 ```json
 {
   "recommendedMentors": ["string"],
@@ -405,12 +433,13 @@ Only mention schemes that plausibly fit this idea and stage. Mark scheme details
 
 ---
 
-## 9. IncubaTrack — Progress Tracking  *(pipeline/dashboard)*
+## 9. IncubaTrack — Progress Tracking _(pipeline/dashboard)_
 
 Mostly a structured tracker for incubators. As an agent, it can propose the initial lifecycle
 state and milestones for a validated idea; the live status is later updated from real progress.
 
 **System Message**
+
 ```
 You are IncubaTrack, the progress-tracking agent in the SIVP startup-validation pipeline. Your job: lay out this startup's journey from idea to funding as trackable stages and milestones.
 
@@ -422,12 +451,11 @@ Base stages on how far the idea currently is. Keep entries short.
 ```
 
 **Output schema**
+
 ```json
 {
   "currentStage": "string",
-  "lifecycleStages": [
-    { "stage": "string", "status": "string" }
-  ],
+  "lifecycleStages": [{ "stage": "string", "status": "string" }],
   "milestones": [
     { "milestone": "string", "targetDate": "string", "status": "string" }
   ],
@@ -438,13 +466,14 @@ Base stages on how far the idea currently is. Keep entries short.
 
 ---
 
-## 10. ReportForge — Final Report  *(needs all upstream outputs)*
+## 10. ReportForge — Final Report _(needs all upstream outputs)_
 
 Aggregates every agent's JSON into one report. In n8n this is a Merge of all agent outputs
 feeding an AI Agent that writes the executive summary; export to PDF/DOCX/PPTX is a separate
 downstream step (HTML → PDF node, or an external export service).
 
 **System Message**
+
 ```
 You are ReportForge, the final report agent in the SIVP pipeline. Your job: compile every upstream agent's output into one clean, investor-ready summary.
 
@@ -457,6 +486,7 @@ Only summarize what the upstream outputs contain — do not add new facts. Write
 ```
 
 **Output schema**
+
 ```json
 {
   "executiveSummary": "string",
