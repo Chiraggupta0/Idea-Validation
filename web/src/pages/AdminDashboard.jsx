@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, GraduationCap, UserCog, CalendarDays, Megaphone, Trash2, BarChart3 } from 'lucide-react'
+import { Users, GraduationCap, UserCog, CalendarDays, Megaphone, Trash2, BarChart3, Inbox } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts'
 import { useAuth } from '../lib/auth'
 import {
   getUsers, getMentors, assignMentor, getMeetings, getProgress,
   getAnnouncements, addAnnouncement, deleteAnnouncement, deleteUser, setUserRole, STAGES,
+  getApplications, updateApplication, admitApplicant, APP_STAGES,
 } from '../lib/store'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
@@ -26,6 +27,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState(() => getUsers())
   const [anns, setAnns] = useState(() => getAnnouncements())
   const [annForm, setAnnForm] = useState({ title: '', body: '' })
+  const [apps, setApps] = useState(() => getApplications())
   const mentors = users.filter((u) => u.role === 'mentor')
   const students = users.filter((u) => u.role === 'student')
   const meetings = getMeetings()
@@ -55,6 +57,31 @@ export default function AdminDashboard() {
           <StatCard icon={GraduationCap} label="Students" value={students.length} />
           <StatCard icon={UserCog} label="Mentors" value={mentors.length} />
           <StatCard icon={CalendarDays} label="Meetings" value={meetings.length} />
+        </div>
+
+        {/* Applications / intake */}
+        <div className="brutal mt-6 p-5">
+          <div className="eyebrow mb-4 flex items-center gap-2"><Inbox size={14} /> applications ({apps.filter((a) => a.status === 'Applied').length} new)</div>
+          {apps.length === 0 && <p className="text-sm text-[var(--muted)]">No applications yet. Share <b>/apply</b> to collect founder applications.</p>}
+          <div className="space-y-2">
+            {apps.map((a) => (
+              <div key={a.id} className="brutal-flat flex flex-wrap items-center justify-between gap-3 p-3">
+                <div className="min-w-0">
+                  <div className="font-bold">{a.startup} <span className="text-xs font-normal text-[var(--muted)]">· {a.name} · {a.stage}</span></div>
+                  <div className="text-xs text-[var(--ink-soft)]">{a.pitch}</div>
+                  <div className="text-xs text-[var(--muted)]">{a.email}{a.teamSize ? ` · team of ${a.teamSize}` : ''}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select className="brutal-flat bg-white px-2 py-1 text-xs outline-none" value={a.status} onChange={(e) => { updateApplication(a.id, { status: e.target.value }); setApps(getApplications()) }}>
+                    {APP_STAGES.map((s) => <option key={s}>{s}</option>)}
+                  </select>
+                  {a.status !== 'Admitted' && (
+                    <button onClick={() => { admitApplicant(a); setApps(getApplications()); setUsers(getUsers()) }} className="btn btn-light btn-sm">Admit</button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Analytics + announcements */}

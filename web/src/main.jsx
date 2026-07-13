@@ -14,6 +14,10 @@ import AdminAuth from './pages/AdminAuth'
 import StudentDashboard from './pages/StudentDashboard'
 import MentorDashboard from './pages/MentorDashboard'
 import AdminDashboard from './pages/AdminDashboard'
+import Apply from './pages/Apply'
+import Showcase from './pages/Showcase'
+import Events from './pages/Events'
+import Resources from './pages/Resources'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -24,6 +28,11 @@ createRoot(document.getElementById('root')).render(
           <Route path="/validate" element={<Validate />} />
           <Route path="/report" element={<Report />} />
           <Route path="/report/:section" element={<ReportSection />} />
+
+          <Route path="/apply" element={<Apply />} />
+          <Route path="/showcase" element={<Showcase />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/resources" element={<Resources />} />
 
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />

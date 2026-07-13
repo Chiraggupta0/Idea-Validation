@@ -132,6 +132,53 @@ export function deleteAnnouncement(id) {
   save(ANN, load(ANN, []).filter((x) => x.id !== id))
 }
 
+/* ---------- applications (intake portal) ---------- */
+const APPS = 'sivpApplications'
+export const APP_STAGES = ['Applied', 'Shortlisted', 'Interview', 'Admitted', 'Rejected']
+export function getApplications() {
+  return load(APPS, []).sort((a, b) => b.at - a.at)
+}
+export function addApplication(a) {
+  const all = load(APPS, [])
+  all.push({ id: Date.now(), at: Date.now(), status: 'Applied', ...a })
+  save(APPS, all)
+}
+export function updateApplication(id, patch) {
+  save(APPS, load(APPS, []).map((x) => (x.id === id ? { ...x, ...patch } : x)))
+}
+/** Admit an applicant → create a student account (default password: welcome123). */
+export function admitApplicant(app) {
+  const users = loadUsers()
+  if (!users.find((u) => u.email === app.email)) {
+    const mentor = users.find((u) => u.role === 'mentor')
+    users.push({ id: 's' + Date.now(), name: app.name, email: app.email, password: 'welcome123', role: 'student', startup: app.startup, tagline: app.pitch, mentorId: mentor ? mentor.id : undefined })
+    localStorage.setItem('sivpUsers', JSON.stringify(users))
+  }
+  updateApplication(app.id, { status: 'Admitted' })
+}
+
+/* ---------- events & workshops ---------- */
+const EVENTS = 'sivpEvents'
+export function getEvents() {
+  return load(EVENTS, []).sort((a, b) => (a.date < b.date ? -1 : 1))
+}
+export function addEvent(e) {
+  const all = load(EVENTS, [])
+  all.push({ id: Date.now(), rsvps: [], ...e })
+  save(EVENTS, all)
+}
+export function deleteEvent(id) {
+  save(EVENTS, load(EVENTS, []).filter((e) => e.id !== id))
+}
+export function toggleRsvp(id, userId) {
+  save(EVENTS, load(EVENTS, []).map((e) => {
+    if (e.id !== id) return e
+    const has = (e.rsvps || []).includes(userId)
+    return { ...e, rsvps: has ? e.rsvps.filter((u) => u !== userId) : [...(e.rsvps || []), userId] }
+  }))
+}
+export const EVENT_TYPES = ['Workshop', 'Demo Day', 'Pitch Night', 'Guest Talk', 'Deadline']
+
 /* ---------- admin user management ---------- */
 export function deleteUser(id) {
   const u = loadUsers().filter((x) => x.id !== id)
