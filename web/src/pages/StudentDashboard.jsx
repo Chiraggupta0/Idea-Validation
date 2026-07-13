@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { UserCog, CalendarPlus, TrendingUp, Star, FileSearch, Megaphone } from 'lucide-react'
+import { UserCog, CalendarPlus, TrendingUp, Star, FileSearch, Megaphone, Rocket, Layers } from 'lucide-react'
 import { useAuth } from '../lib/auth'
-import { getUser, getProgress, saveProgress, getMeetingsFor, addMeeting, getEvals, getAnnouncements, STAGES } from '../lib/store'
+import { getUser, getProgress, saveProgress, getMeetingsFor, addMeeting, getEvals, getAnnouncements, getCohortFor, STAGES } from '../lib/store'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
 import TaskList from '../components/dash/TaskList'
@@ -14,14 +14,24 @@ const inputCls = 'w-full brutal-flat bg-white px-3 py-2 text-sm outline-none foc
 const statusColor = { requested: '#FFD84D', accepted: '#97C459', declined: '#F09595' }
 
 export default function StudentDashboard() {
-  const { user } = useAuth()
+  const { user, updateProfile } = useAuth()
   const mentor = user.mentorId ? getUser(user.mentorId) : null
+  const cohort = getCohortFor(user.id)
 
   const [progress, setProgress] = useState(() => getProgress(user.id))
   const [meetings, setMeetings] = useState(() => getMeetingsFor(user.id, 'student'))
   const [meetForm, setMeetForm] = useState({ date: '', time: '', topic: '' })
+  const [profile, setProfile] = useState({ startup: user.startup || '', tagline: user.tagline || '', website: user.website || '' })
+  const [saved, setSaved] = useState(false)
   const evals = getEvals(user.id)
   const announcements = getAnnouncements()
+
+  function saveProfile(e) {
+    e.preventDefault()
+    updateProfile(profile)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 1500)
+  }
 
   function saveProg(e) {
     e.preventDefault()
@@ -41,9 +51,14 @@ export default function StudentDashboard() {
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <div className="eyebrow text-[var(--ink-soft)]">// student dashboard</div>
         <h1 className="display mt-2 text-3xl sm:text-4xl">Hi, {user.name.split(' ')[0]}.</h1>
-        <p className="mt-1 text-sm text-[var(--ink-soft)]">
-          {user.startup ? `Working on ${user.startup}` : 'Track your startup journey with your mentor.'}
-        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-[var(--ink-soft)]">
+          <span>{user.startup ? `Working on ${user.startup}` : 'Track your startup journey with your mentor.'}</span>
+          {cohort && (
+            <span className="brutal-flat inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold uppercase" style={{ background: 'var(--blue)', color: '#fff' }}>
+              <Layers size={12} /> {cohort.name}
+            </span>
+          )}
+        </div>
 
         {announcements.length > 0 && (
           <div className="brutal mt-6 p-4" style={{ background: 'var(--yellow)' }}>
@@ -73,6 +88,20 @@ export default function StudentDashboard() {
             <SkeuoButton to="/validate" size="sm" variant="light" className="mt-4">Validate an idea</SkeuoButton>
           </div>
         </div>
+
+        {/* Startup profile → feeds the public showcase */}
+        <form onSubmit={saveProfile} className="brutal mt-6 p-5">
+          <div className="eyebrow mb-3 flex items-center gap-2"><Rocket size={14} /> startup profile · shown on the public showcase</div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <input className={inputCls} value={profile.startup} onChange={(e) => setProfile({ ...profile, startup: e.target.value })} placeholder="Startup name" />
+            <input className={inputCls} value={profile.tagline} onChange={(e) => setProfile({ ...profile, tagline: e.target.value })} placeholder="One-line tagline" />
+            <input className={inputCls} value={profile.website} onChange={(e) => setProfile({ ...profile, website: e.target.value })} placeholder="Website (optional)" />
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <SkeuoButton type="submit" size="sm">Save profile</SkeuoButton>
+            {saved && <span className="text-xs font-bold text-[var(--blue)]">Saved</span>}
+          </div>
+        </form>
 
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <form onSubmit={saveProg} className="brutal p-5">

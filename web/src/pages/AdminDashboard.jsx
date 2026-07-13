@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, GraduationCap, UserCog, CalendarDays, Megaphone, Trash2, BarChart3, Inbox } from 'lucide-react'
+import { Users, GraduationCap, UserCog, CalendarDays, Megaphone, Trash2, BarChart3, Inbox, Layers } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts'
 import { useAuth } from '../lib/auth'
 import {
   getUsers, getMentors, assignMentor, getMeetings, getProgress,
   getAnnouncements, addAnnouncement, deleteAnnouncement, deleteUser, setUserRole, STAGES,
   getApplications, updateApplication, admitApplicant, APP_STAGES,
+  getCohorts, addCohort, deleteCohort, setStudentCohort,
 } from '../lib/store'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
@@ -28,6 +29,8 @@ export default function AdminDashboard() {
   const [anns, setAnns] = useState(() => getAnnouncements())
   const [annForm, setAnnForm] = useState({ title: '', body: '' })
   const [apps, setApps] = useState(() => getApplications())
+  const [cohorts, setCohorts] = useState(() => getCohorts())
+  const [cohortName, setCohortName] = useState('')
   const mentors = users.filter((u) => u.role === 'mentor')
   const students = users.filter((u) => u.role === 'student')
   const meetings = getMeetings()
@@ -42,6 +45,14 @@ export default function AdminDashboard() {
     addAnnouncement(annForm)
     setAnns(getAnnouncements())
     setAnnForm({ title: '', body: '' })
+  }
+
+  function createCohort(e) {
+    e.preventDefault()
+    if (!cohortName.trim()) return
+    addCohort({ name: cohortName })
+    setCohorts(getCohorts())
+    setCohortName('')
   }
 
   return (
@@ -164,6 +175,36 @@ export default function AdminDashboard() {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* Cohorts / batches */}
+        <div className="brutal mt-6 p-5">
+          <div className="eyebrow mb-4 flex items-center gap-2"><Layers size={14} /> cohorts / batches</div>
+          <form onSubmit={createCohort} className="mb-4 flex gap-2">
+            <input className={inputCls} value={cohortName} onChange={(e) => setCohortName(e.target.value)} placeholder="New cohort (e.g. Batch 2026)" />
+            <SkeuoButton type="submit" size="sm">Create</SkeuoButton>
+          </form>
+          {cohorts.length === 0 && <p className="text-sm text-[var(--muted)]">No cohorts yet.</p>}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {cohorts.map((c) => (
+              <div key={c.id} className="brutal-flat p-3">
+                <div className="flex items-center justify-between">
+                  <b>{c.name}</b>
+                  <button onClick={() => { deleteCohort(c.id); setCohorts(getCohorts()); refresh() }} className="text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete cohort"><Trash2 size={13} /></button>
+                </div>
+                <div className="text-xs text-[var(--muted)]">{students.filter((s) => s.cohortId === c.id).length} students</div>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {students.filter((s) => s.cohortId === c.id).map((s) => (
+                    <span key={s.id} className="brutal-flat px-1.5 py-0.5 text-[11px] font-bold">{s.name.split(' ')[0]}</span>
+                  ))}
+                </div>
+                <select className="brutal-flat mt-2 w-full bg-white px-2 py-1 text-xs outline-none" value="" onChange={(e) => { if (e.target.value) { setStudentCohort(e.target.value, c.id); setCohorts(getCohorts()); refresh() } }}>
+                  <option value="">+ add student…</option>
+                  {students.filter((s) => s.cohortId !== c.id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+            ))}
           </div>
         </div>
 

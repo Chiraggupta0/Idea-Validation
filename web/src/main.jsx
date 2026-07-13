@@ -18,6 +18,7 @@ import Apply from './pages/Apply'
 import Showcase from './pages/Showcase'
 import Events from './pages/Events'
 import Resources from './pages/Resources'
+import Opportunities from './pages/Opportunities'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -33,6 +34,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/showcase" element={<Showcase />} />
           <Route path="/events" element={<Events />} />
           <Route path="/resources" element={<Resources />} />
+          <Route path="/opportunities" element={<Opportunities />} />
 
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />

@@ -2,12 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Menu, X, LogOut } from 'lucide-react'
 import SkeuoButton from './SkeuoButton'
+import NotificationBell from './NotificationBell'
 import { useAuth } from '../lib/auth'
 
 const LINKS = [
   { label: 'Showcase', to: '/showcase' },
   { label: 'Events', to: '/events' },
   { label: 'Resources', to: '/resources' },
+  { label: 'Grants', to: '/opportunities' },
 ]
 
 const DASH = { student: '/student', mentor: '/mentor', admin: '/admin/dashboard' }
@@ -63,6 +65,7 @@ export default function GlassNav() {
         <div className="flex items-center gap-2 sm:gap-3">
           {user ? (
             <>
+              <NotificationBell />
               <span className="hidden text-xs font-semibold text-[var(--ink)] sm:inline">{user.name.split(' ')[0]}</span>
               <button onClick={doLogout} className="btn btn-light btn-sm hidden sm:inline-flex"><LogOut size={13} /> Log out</button>
             </>

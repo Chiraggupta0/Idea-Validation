@@ -164,7 +164,7 @@ export function getEvents() {
 }
 export function addEvent(e) {
   const all = load(EVENTS, [])
-  all.push({ id: Date.now(), rsvps: [], ...e })
+  all.push({ id: Date.now(), at: Date.now(), rsvps: [], ...e })
   save(EVENTS, all)
 }
 export function deleteEvent(id) {
@@ -189,4 +189,44 @@ export function setUserRole(id, role) {
   const u = loadUsers().map((x) => (x.id === id ? { ...x, role } : x))
   localStorage.setItem('sivpUsers', JSON.stringify(u))
   return u
+}
+export function updateUser(id, patch) {
+  const users = loadUsers().map((x) => (x.id === id ? { ...x, ...patch } : x))
+  localStorage.setItem('sivpUsers', JSON.stringify(users))
+  return users.find((x) => x.id === id)
+}
+
+/* ---------- cohorts / batches ---------- */
+const COHORTS = 'sivpCohorts'
+export function getCohorts() {
+  return load(COHORTS, [])
+}
+export function addCohort(c) {
+  const a = load(COHORTS, [])
+  a.push({ id: Date.now(), studentIds: [], ...c })
+  save(COHORTS, a)
+}
+export function deleteCohort(id) {
+  save(COHORTS, load(COHORTS, []).filter((c) => c.id !== id))
+}
+export function setStudentCohort(studentId, cohortId) {
+  const cid = cohortId ? Number(cohortId) : null
+  const cohorts = load(COHORTS, []).map((c) => ({ ...c, studentIds: (c.studentIds || []).filter((s) => s !== studentId) }))
+  const target = cohorts.find((c) => c.id === cid)
+  if (target) target.studentIds.push(studentId)
+  save(COHORTS, cohorts)
+  updateUser(studentId, { cohortId: cid })
+}
+export function getCohortFor(studentId) {
+  return load(COHORTS, []).find((c) => (c.studentIds || []).includes(studentId))
+}
+
+/* ---------- notification read-state ---------- */
+export function getLastSeen(userId) {
+  return load('sivpLastSeen', {})[userId] || 0
+}
+export function setLastSeen(userId) {
+  const all = load('sivpLastSeen', {})
+  all[userId] = Date.now()
+  save('sivpLastSeen', all)
 }

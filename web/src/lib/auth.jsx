@@ -85,8 +85,15 @@ export function AuthProvider({ children }) {
     persist(null)
   }
 
+  function updateProfile(patch) {
+    if (!user) return
+    const users = loadUsers().map((u) => (u.id === user.id ? { ...u, ...patch } : u))
+    saveUsers(users)
+    persist({ ...user, ...patch })
+  }
+
   return (
-    <AuthContext.Provider value={{ user, signup, login, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, signup, login, loginWithGoogle, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   )
