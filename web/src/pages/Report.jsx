@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import { Download } from 'lucide-react'
+import { Download, Info } from 'lucide-react'
 import GlassNav from '../components/GlassNav'
 import Footer from '../components/Footer'
 import FadeUp from '../components/FadeUp'
@@ -7,73 +6,51 @@ import ScoreGauge from '../components/report/ScoreGauge'
 import { MarketBars, ScoreBreakdown } from '../components/report/Bars'
 import RevenueChart from '../components/report/RevenueChart'
 import SwotGrid from '../components/report/SwotGrid'
-import { SAMPLE_REPORT } from '../lib/sampleReport'
-
-const TABS = ['Overview', 'Market', 'Financials', 'SWOT']
+import ReportTabs from '../components/report/ReportTabs'
+import { useReport } from '../lib/useReport'
+import { exportPDF, exportDOCX, exportPPTX } from '../lib/export'
 
 function Stat({ label, value, sub }) {
   return (
     <div className="neu-sm p-4">
       <div className="text-xs font-medium text-[var(--muted)]">{label}</div>
-      <div className="mt-1 font-display text-3xl font-bold tracking-tight">{value}</div>
+      <div className="mt-1 font-display text-2xl font-bold tracking-tight sm:text-3xl">{value}</div>
       {sub && <div className="mt-0.5 text-xs text-[var(--muted)]">{sub}</div>}
     </div>
   )
 }
 
 export default function Report() {
-  const [report, setReport] = useState(SAMPLE_REPORT)
+  const { report: r, isLive } = useReport()
+  const exporters = { PDF: exportPDF, DOCX: exportDOCX, PPTX: exportPPTX }
 
-  useEffect(() => {
-    const stored = sessionStorage.getItem('sivpReport')
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored)
-        // Use live report if it has the expected shape, otherwise fall back
-        if (parsed.startupName && parsed.scoreBreakdown) {
-          setReport(parsed)
-          sessionStorage.removeItem('sivpReport') // Clean up after reading
-        }
-      } catch (e) {
-        console.error('Failed to parse stored report:', e)
-      }
-    }
-  }, [])
-
-  const r = report
   return (
     <div className="min-h-screen" style={{ background: 'var(--neu-bg)' }}>
       <GlassNav />
 
-      <div className="mx-auto max-w-6xl px-6 py-10 md:px-10">
-        {/* Floating glass tab bar */}
-        <div className="glass mb-8 flex w-fit gap-1.5 rounded-xl p-1.5">
-          {TABS.map((t, i) => (
-            <a
-              key={t}
-              href={`#${t.toLowerCase()}`}
-              className={`rounded-lg px-4 py-2 text-xs font-semibold ${
-                i === 0 ? 'bg-[var(--ink)] text-white' : 'text-[var(--ink-soft)]'
-              }`}
-            >
-              {t}
-            </a>
-          ))}
-        </div>
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:px-10 md:py-10">
+        <ReportTabs />
+
+        {!isLive && (
+          <div className="brutal-flat mb-6 flex items-start gap-2 p-3 text-xs" style={{ background: 'var(--yellow)' }}>
+            <Info size={15} className="mt-0.5 shrink-0" />
+            <span>Showing a <b>sample</b> report. Submit an idea and once the pipeline returns data, your real report appears here.</span>
+          </div>
+        )}
 
         {/* Header */}
         <FadeUp>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="eyebrow">// validation report · {r.validatedAt}</div>
-              <h1 className="display mt-2 text-4xl md:text-5xl">{r.startupName}</h1>
+              <h1 className="display mt-2 text-3xl sm:text-4xl md:text-5xl">{r.startupName}</h1>
               <p className="mt-1 text-sm text-[var(--ink-soft)]">
                 {r.industry} · {r.geographicMarket}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {['PDF', 'DOCX', 'PPTX'].map((x) => (
-                <button key={x} className="btn btn-light btn-sm">
+                <button key={x} className="btn btn-light btn-sm" onClick={() => exporters[x](r)}>
                   <Download size={13} /> {x}
                 </button>
               ))}
@@ -82,12 +59,12 @@ export default function Report() {
         </FadeUp>
 
         {/* Scores */}
-        <section id="overview" className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-[230px_1fr]">
+        <section className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-[230px_1fr]">
           <FadeUp>
             <ScoreGauge score={r.investorReadinessScore} category={r.readinessCategory} />
           </FadeUp>
           <FadeUp delay={0.08}>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
               <Stat label="Validation" value={String(r.validationScore)} sub="Worth pursuing" />
               <Stat label="PMF" value={String(r.pmfScore)} sub="Strong demand" />
               <Stat label="Success" value={`${r.successProbability}%`} sub="Moderate risk" />
@@ -99,7 +76,7 @@ export default function Report() {
         </section>
 
         {/* Market + breakdown */}
-        <section id="market" className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <section className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <FadeUp>
             <MarketBars
               rows={[
@@ -116,14 +93,14 @@ export default function Report() {
         </section>
 
         {/* Financials */}
-        <section id="financials" className="mt-6">
+        <section className="mt-6">
           <FadeUp>
             <RevenueChart data={r.revenueForecast} />
           </FadeUp>
         </section>
 
         {/* SWOT */}
-        <section id="swot" className="mt-8">
+        <section className="mt-8">
           <FadeUp>
             <SwotGrid swot={r.swot} />
           </FadeUp>
@@ -133,7 +110,7 @@ export default function Report() {
         <section className="mt-8">
           <FadeUp>
             <div className="eyebrow mb-3">// executive summary · ReportForge</div>
-            <div className="brutal p-6">
+            <div className="brutal p-5 sm:p-6">
               <p className="text-sm leading-relaxed text-[var(--ink-soft)]">{r.executiveSummary}</p>
             </div>
           </FadeUp>

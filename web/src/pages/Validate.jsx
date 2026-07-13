@@ -41,6 +41,9 @@ export default function Validate() {
       })
       if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`)
       const report = await res.json()
+      // Log the raw pipeline output so we can see its exact shape (F12 console).
+      console.log('SIVP raw pipeline response:', report)
+      sessionStorage.setItem('sivpReportRaw', JSON.stringify(report))
       sessionStorage.setItem('sivpReport', JSON.stringify(report))
       nav('/report')
     } catch (err) {

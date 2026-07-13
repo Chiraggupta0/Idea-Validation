@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import SkeuoButton from './SkeuoButton'
@@ -12,9 +12,31 @@ const LINKS = [
 
 export default function GlassNav() {
   const [open, setOpen] = useState(false)
+  const [hidden, setHidden] = useState(false)
+  const lastY = useRef(0)
+
+  useEffect(() => {
+    function onScroll() {
+      const y = window.scrollY
+      // Hide when scrolling down past the hero; show when scrolling up.
+      if (y > lastY.current && y > 120) {
+        setHidden(true)
+        setOpen(false)
+      } else {
+        setHidden(false)
+      }
+      lastY.current = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
-    <div className="sticky top-4 z-50 mx-auto w-full max-w-6xl px-4">
-      <nav className="glass flex items-center justify-between rounded-2xl px-5 py-3">
+    <div
+      className="sticky top-3 z-50 mx-auto w-full max-w-6xl px-3 transition-transform duration-300 sm:top-4 sm:px-4"
+      style={{ transform: hidden ? 'translateY(-140%)' : 'translateY(0)' }}
+    >
+      <nav className="glass flex items-center justify-between rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3">
         <Link to="/" className="font-display text-lg font-bold tracking-tight text-[var(--ink)]">
           SIVP
         </Link>
@@ -31,7 +53,7 @@ export default function GlassNav() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link to="/validate" className="hidden text-xs font-semibold text-[var(--ink)] sm:inline">
             Log in
           </Link>
