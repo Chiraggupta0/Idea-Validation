@@ -75,3 +75,71 @@ export function addEval(studentId, ev) {
 }
 
 export const STAGES = ['Idea', 'Validation', 'MVP', 'Launch', 'Growth', 'Fundraising']
+
+/* ---------- tasks / action items ---------- */
+const TASKS = 'sivpTasks'
+export function getTasks(studentId) {
+  return load(TASKS, []).filter((t) => t.studentId === studentId)
+}
+export function addTask(t) {
+  const a = load(TASKS, [])
+  a.push({ id: Date.now(), done: false, createdAt: new Date().toISOString(), ...t })
+  save(TASKS, a)
+}
+export function toggleTask(id) {
+  save(TASKS, load(TASKS, []).map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
+}
+export function deleteTask(id) {
+  save(TASKS, load(TASKS, []).filter((t) => t.id !== id))
+}
+
+/* ---------- messages (student <-> mentor thread) ---------- */
+const MESSAGES = 'sivpMessages'
+export function getThread(studentId) {
+  return load(MESSAGES, []).filter((m) => m.studentId === studentId).sort((a, b) => a.at - b.at)
+}
+export function sendMessage(m) {
+  const a = load(MESSAGES, [])
+  a.push({ id: Date.now(), at: Date.now(), ...m })
+  save(MESSAGES, a)
+}
+
+/* ---------- shared resources ---------- */
+const RESOURCES = 'sivpResources'
+export function getResources(studentId) {
+  return load(RESOURCES, []).filter((r) => r.studentId === studentId)
+}
+export function addResource(r) {
+  const a = load(RESOURCES, [])
+  a.push({ id: Date.now(), ...r })
+  save(RESOURCES, a)
+}
+export function deleteResource(id) {
+  save(RESOURCES, load(RESOURCES, []).filter((r) => r.id !== id))
+}
+
+/* ---------- announcements (admin broadcast) ---------- */
+const ANN = 'sivpAnnouncements'
+export function getAnnouncements() {
+  return load(ANN, []).sort((a, b) => b.at - a.at)
+}
+export function addAnnouncement(a2) {
+  const a = load(ANN, [])
+  a.push({ id: Date.now(), at: Date.now(), ...a2 })
+  save(ANN, a)
+}
+export function deleteAnnouncement(id) {
+  save(ANN, load(ANN, []).filter((x) => x.id !== id))
+}
+
+/* ---------- admin user management ---------- */
+export function deleteUser(id) {
+  const u = loadUsers().filter((x) => x.id !== id)
+  localStorage.setItem('sivpUsers', JSON.stringify(u))
+  return u
+}
+export function setUserRole(id, role) {
+  const u = loadUsers().map((x) => (x.id === id ? { ...x, role } : x))
+  localStorage.setItem('sivpUsers', JSON.stringify(u))
+  return u
+}

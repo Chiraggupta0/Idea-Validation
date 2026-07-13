@@ -1,10 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { UserCog, CalendarPlus, TrendingUp, Star, FileSearch } from 'lucide-react'
+import { UserCog, CalendarPlus, TrendingUp, Star, FileSearch, Megaphone } from 'lucide-react'
 import { useAuth } from '../lib/auth'
-import { getUser, getProgress, saveProgress, getMeetingsFor, addMeeting, getEvals, STAGES } from '../lib/store'
+import { getUser, getProgress, saveProgress, getMeetingsFor, addMeeting, getEvals, getAnnouncements, STAGES } from '../lib/store'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
+import TaskList from '../components/dash/TaskList'
+import ResourceList from '../components/dash/ResourceList'
+import MessageThread from '../components/dash/MessageThread'
+import SchemeList from '../components/dash/SchemeList'
 
 const inputCls = 'w-full brutal-flat bg-white px-3 py-2 text-sm outline-none focus:shadow-[3px_3px_0_var(--blue)]'
 const statusColor = { requested: '#FFD84D', accepted: '#97C459', declined: '#F09595' }
@@ -17,6 +21,7 @@ export default function StudentDashboard() {
   const [meetings, setMeetings] = useState(() => getMeetingsFor(user.id, 'student'))
   const [meetForm, setMeetForm] = useState({ date: '', time: '', topic: '' })
   const evals = getEvals(user.id)
+  const announcements = getAnnouncements()
 
   function saveProg(e) {
     e.preventDefault()
@@ -40,8 +45,15 @@ export default function StudentDashboard() {
           {user.startup ? `Working on ${user.startup}` : 'Track your startup journey with your mentor.'}
         </p>
 
-        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Mentor */}
+        {announcements.length > 0 && (
+          <div className="brutal mt-6 p-4" style={{ background: 'var(--yellow)' }}>
+            <div className="eyebrow mb-1 flex items-center gap-2"><Megaphone size={14} /> announcement</div>
+            <div className="font-display font-bold">{announcements[0].title}</div>
+            <p className="text-sm text-[var(--ink-soft)]">{announcements[0].body}</p>
+          </div>
+        )}
+
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="brutal p-5">
             <div className="eyebrow mb-3 flex items-center gap-2"><UserCog size={14} /> your mentor</div>
             {mentor ? (
@@ -55,7 +67,6 @@ export default function StudentDashboard() {
             )}
           </div>
 
-          {/* Validate idea */}
           <div className="brutal p-5" style={{ background: 'var(--blue)', color: '#fff' }}>
             <div className="eyebrow mb-3 flex items-center gap-2" style={{ color: '#fff' }}><FileSearch size={14} /> idea validation</div>
             <p className="text-sm text-white/85">Run your idea through the 10-agent pipeline and get an investor-ready report.</p>
@@ -63,7 +74,6 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Progress */}
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <form onSubmit={saveProg} className="brutal p-5">
             <div className="eyebrow mb-3 flex items-center gap-2"><TrendingUp size={14} /> update startup progress</div>
@@ -80,7 +90,6 @@ export default function StudentDashboard() {
             {progress.updatedAt && <p className="mt-2 text-xs text-[var(--muted)]">Last saved {new Date(progress.updatedAt).toLocaleString()}</p>}
           </form>
 
-          {/* Book meeting */}
           <div className="brutal p-5">
             <div className="eyebrow mb-3 flex items-center gap-2"><CalendarPlus size={14} /> book a mentor meeting</div>
             <form onSubmit={book} className="space-y-2">
@@ -101,6 +110,18 @@ export default function StudentDashboard() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Tasks + resources + messages */}
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="brutal p-5"><TaskList studentId={user.id} mentorId={user.mentorId} canAssign={false} /></div>
+          <div className="brutal p-5"><ResourceList studentId={user.id} canAdd={false} /></div>
+          <div className="brutal p-5"><MessageThread studentId={user.id} role="student" senderName={user.name} /></div>
+        </div>
+
+        {/* Government schemes */}
+        <div className="brutal mt-6 p-5">
+          <SchemeList stage={progress.stage} />
         </div>
 
         {/* Evaluations */}

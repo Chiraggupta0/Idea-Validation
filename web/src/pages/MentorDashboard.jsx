@@ -1,18 +1,22 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, CalendarCheck, ClipboardCheck } from 'lucide-react'
+import { Users, CalendarCheck, ClipboardCheck, Settings2, TrendingUp, Star } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { getStudentsForMentor, getProgress, getMeetingsFor, updateMeeting, addEval, getEvals } from '../lib/store'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
+import TaskList from '../components/dash/TaskList'
+import ResourceList from '../components/dash/ResourceList'
+import MessageThread from '../components/dash/MessageThread'
 
 const inputCls = 'w-full brutal-flat bg-white px-3 py-2 text-sm outline-none focus:shadow-[3px_3px_0_var(--blue)]'
 const statusColor = { requested: '#FFD84D', accepted: '#97C459', declined: '#F09595' }
 
-function MenteeCard({ student, mentorName }) {
+function MenteeCard({ student, mentorName, mentorId }) {
   const progress = getProgress(student.id)
   const [evals, setEvals] = useState(() => getEvals(student.id))
   const [form, setForm] = useState({ score: 7, feedback: '' })
+  const [tools, setTools] = useState(false)
 
   function evaluate(e) {
     e.preventDefault()
@@ -50,13 +54,31 @@ function MenteeCard({ student, mentorName }) {
 
       {evals.length > 0 && (
         <div className="mt-3 space-y-2">
-          {evals.map((ev) => (
-            <div key={ev.id} className="brutal-flat p-2 text-xs">
-              <b>{ev.score}/10</b> — {ev.feedback}
-            </div>
+          {evals.slice(0, 2).map((ev) => (
+            <div key={ev.id} className="brutal-flat p-2 text-xs"><b>{ev.score}/10</b> — {ev.feedback}</div>
           ))}
         </div>
       )}
+
+      <button onClick={() => setTools((v) => !v)} className="btn btn-light btn-sm mt-3 w-full">
+        <Settings2 size={13} /> {tools ? 'Hide tools' : 'Tasks · resources · messages'}
+      </button>
+      {tools && (
+        <div className="mt-4 space-y-5 border-t-2 border-[var(--ink)] pt-4">
+          <TaskList studentId={student.id} mentorId={mentorId} canAssign />
+          <ResourceList studentId={student.id} canAdd />
+          <MessageThread studentId={student.id} role="mentor" senderName={mentorName} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Stat({ icon: Icon, label, value }) {
+  return (
+    <div className="neu-sm p-4">
+      <div className="flex items-center gap-2 text-[var(--muted)]"><Icon size={14} /><span className="text-xs font-medium">{label}</span></div>
+      <div className="mt-1 font-display text-2xl font-bold">{value}</div>
     </div>
   )
 }
@@ -71,16 +93,28 @@ export default function MentorDashboard() {
     setMeetings(getMeetingsFor(user.id, 'mentor'))
   }
 
+  const avgProgress = mentees.length
+    ? Math.round(mentees.reduce((s, m) => s + getProgress(m.id).percent, 0) / mentees.length)
+    : 0
+  const pending = meetings.filter((m) => m.status === 'requested').length
+  const evalsGiven = mentees.reduce((s, m) => s + getEvals(m.id).length, 0)
+
   return (
     <div className="min-h-screen">
       <GlassNav />
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <div className="eyebrow text-[var(--ink-soft)]">// mentor dashboard</div>
         <h1 className="display mt-2 text-3xl sm:text-4xl">Hi, {user.name.split(' ')[0]}.</h1>
-        <p className="mt-1 text-sm text-[var(--ink-soft)]">{user.expertise} · {mentees.length} mentee{mentees.length !== 1 ? 's' : ''}</p>
+        <p className="mt-1 text-sm text-[var(--ink-soft)]">{user.expertise}</p>
 
-        {/* Meeting requests */}
-        <div className="brutal mt-8 p-5">
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <Stat icon={Users} label="Mentees" value={mentees.length} />
+          <Stat icon={TrendingUp} label="Avg progress" value={`${avgProgress}%`} />
+          <Stat icon={CalendarCheck} label="Pending requests" value={pending} />
+          <Stat icon={Star} label="Evaluations" value={evalsGiven} />
+        </div>
+
+        <div className="brutal mt-6 p-5">
           <div className="eyebrow mb-3 flex items-center gap-2"><CalendarCheck size={14} /> meeting requests</div>
           {meetings.length === 0 && <p className="text-sm text-[var(--ink-soft)]">No meeting requests.</p>}
           <div className="space-y-2">
@@ -100,7 +134,6 @@ export default function MentorDashboard() {
           </div>
         </div>
 
-        {/* Mentees */}
         <div className="mt-6 flex items-center gap-2">
           <Users size={16} /><h2 className="font-display text-xl font-bold uppercase">Your mentees</h2>
         </div>
@@ -110,7 +143,7 @@ export default function MentorDashboard() {
           </div>
         ) : (
           <div className="mt-3 grid grid-cols-1 gap-6 md:grid-cols-2">
-            {mentees.map((s) => <MenteeCard key={s.id} student={s} mentorName={user.name} />)}
+            {mentees.map((s) => <MenteeCard key={s.id} student={s} mentorName={user.name} mentorId={user.id} />)}
           </div>
         )}
 

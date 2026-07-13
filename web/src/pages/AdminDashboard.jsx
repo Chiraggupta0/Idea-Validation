@@ -1,9 +1,16 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, GraduationCap, UserCog, CalendarDays } from 'lucide-react'
+import { Users, GraduationCap, UserCog, CalendarDays, Megaphone, Trash2, BarChart3 } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts'
 import { useAuth } from '../lib/auth'
-import { getUsers, getMentors, assignMentor, getMeetings, getProgress } from '../lib/store'
+import {
+  getUsers, getMentors, assignMentor, getMeetings, getProgress,
+  getAnnouncements, addAnnouncement, deleteAnnouncement, deleteUser, setUserRole, STAGES,
+} from '../lib/store'
 import GlassNav from '../components/GlassNav'
+import SkeuoButton from '../components/SkeuoButton'
+
+const inputCls = 'w-full brutal-flat bg-white px-3 py-2 text-sm outline-none focus:shadow-[3px_3px_0_var(--blue)]'
 
 function StatCard({ icon: Icon, label, value }) {
   return (
@@ -17,13 +24,22 @@ function StatCard({ icon: Icon, label, value }) {
 export default function AdminDashboard() {
   const { user } = useAuth()
   const [users, setUsers] = useState(() => getUsers())
-  const mentors = getMentors()
+  const [anns, setAnns] = useState(() => getAnnouncements())
+  const [annForm, setAnnForm] = useState({ title: '', body: '' })
+  const mentors = users.filter((u) => u.role === 'mentor')
   const students = users.filter((u) => u.role === 'student')
   const meetings = getMeetings()
 
-  function assign(studentId, mentorId) {
-    assignMentor(studentId, mentorId)
-    setUsers(getUsers())
+  const refresh = () => setUsers(getUsers())
+
+  const stageData = STAGES.map((s) => ({ stage: s, count: students.filter((st) => getProgress(st.id).stage === s).length }))
+
+  function postAnn(e) {
+    e.preventDefault()
+    if (!annForm.title.trim()) return
+    addAnnouncement(annForm)
+    setAnns(getAnnouncements())
+    setAnnForm({ title: '', body: '' })
   }
 
   return (
@@ -41,71 +57,103 @@ export default function AdminDashboard() {
           <StatCard icon={CalendarDays} label="Meetings" value={meetings.length} />
         </div>
 
-        {/* Students + mentor assignment */}
-        <div className="brutal mt-8 p-5">
-          <div className="eyebrow mb-4">// students · assign mentors</div>
+        {/* Analytics + announcements */}
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="neu p-5">
+            <div className="eyebrow mb-4 flex items-center gap-2"><BarChart3 size={14} /> students by stage</div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={stageData} margin={{ top: 4, right: 8, left: -22, bottom: 0 }}>
+                <XAxis dataKey="stage" tick={{ fill: '#6b6b6b', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fill: '#6b6b6b', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ border: '2px solid #141414', borderRadius: 8, fontSize: 12 }} />
+                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                  {stageData.map((_, i) => <Cell key={i} fill="#4a3dff" />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="brutal p-5">
+            <div className="eyebrow mb-3 flex items-center gap-2"><Megaphone size={14} /> announcements</div>
+            <form onSubmit={postAnn} className="space-y-2">
+              <input className={inputCls} value={annForm.title} onChange={(e) => setAnnForm({ ...annForm, title: e.target.value })} placeholder="Announcement title" />
+              <textarea className={inputCls} rows={2} value={annForm.body} onChange={(e) => setAnnForm({ ...annForm, body: e.target.value })} placeholder="Message to all users…" />
+              <SkeuoButton type="submit" size="sm" className="w-full">Post announcement</SkeuoButton>
+            </form>
+            <div className="mt-3 space-y-2">
+              {anns.map((a) => (
+                <div key={a.id} className="brutal-flat flex items-start justify-between gap-2 p-2 text-xs">
+                  <div><b>{a.title}</b><div className="text-[var(--ink-soft)]">{a.body}</div></div>
+                  <button onClick={() => { deleteAnnouncement(a.id); setAnns(getAnnouncements()) }} className="text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete"><Trash2 size={13} /></button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* User management */}
+        <div className="brutal mt-6 p-5">
+          <div className="eyebrow mb-4">// manage users</div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b-2 border-[var(--ink)] text-left">
-                  <th className="pb-2 font-bold uppercase">Student</th>
-                  <th className="pb-2 font-bold uppercase">Startup</th>
+                  <th className="pb-2 font-bold uppercase">User</th>
+                  <th className="pb-2 font-bold uppercase">Role</th>
                   <th className="pb-2 font-bold uppercase">Progress</th>
                   <th className="pb-2 font-bold uppercase">Mentor</th>
+                  <th className="pb-2 font-bold uppercase"></th>
                 </tr>
               </thead>
               <tbody>
-                {students.map((s) => {
-                  const p = getProgress(s.id)
+                {users.map((u) => {
+                  const p = u.role === 'student' ? getProgress(u.id) : null
                   return (
-                    <tr key={s.id} className="border-b border-[var(--neu-dark)]">
-                      <td className="py-2">{s.name}<div className="text-xs text-[var(--muted)]">{s.email}</div></td>
-                      <td className="py-2">{s.startup || '—'}</td>
-                      <td className="py-2">{p.stage} · {p.percent}%</td>
+                    <tr key={u.id} className="border-b border-[var(--neu-dark)]">
+                      <td className="py-2">{u.name}<div className="text-xs text-[var(--muted)]">{u.email}</div></td>
                       <td className="py-2">
-                        <select
-                          className="brutal-flat bg-white px-2 py-1 text-xs outline-none"
-                          value={s.mentorId || ''}
-                          onChange={(e) => assign(s.id, e.target.value)}
-                        >
-                          <option value="">— unassigned —</option>
-                          {mentors.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                        <select className="brutal-flat bg-white px-2 py-1 text-xs outline-none" value={u.role} onChange={(e) => { setUserRole(u.id, e.target.value); refresh() }}>
+                          <option value="student">student</option>
+                          <option value="mentor">mentor</option>
+                          <option value="admin">admin</option>
                         </select>
+                      </td>
+                      <td className="py-2">{p ? `${p.stage} · ${p.percent}%` : '—'}</td>
+                      <td className="py-2">
+                        {u.role === 'student' ? (
+                          <select className="brutal-flat bg-white px-2 py-1 text-xs outline-none" value={u.mentorId || ''} onChange={(e) => { assignMentor(u.id, e.target.value); refresh() }}>
+                            <option value="">— unassigned —</option>
+                            {mentors.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                          </select>
+                        ) : '—'}
+                      </td>
+                      <td className="py-2 text-right">
+                        {u.id !== user.id && (
+                          <button onClick={() => { if (confirm(`Delete ${u.name}?`)) { deleteUser(u.id); refresh() } }} className="text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete user"><Trash2 size={14} /></button>
+                        )}
                       </td>
                     </tr>
                   )
                 })}
-                {students.length === 0 && <tr><td colSpan={4} className="py-3 text-[var(--muted)]">No students yet.</td></tr>}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Mentors + meetings */}
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="brutal p-5">
-            <div className="eyebrow mb-3">// mentors</div>
-            {mentors.map((m) => (
-              <div key={m.id} className="brutal-flat mb-2 p-3 text-sm">
-                <b>{m.name}</b> · {m.expertise}
-                <div className="text-xs text-[var(--muted)]">{students.filter((s) => s.mentorId === m.id).length} mentees · {m.email}</div>
-              </div>
-            ))}
-          </div>
-          <div className="brutal p-5">
-            <div className="eyebrow mb-3">// all meetings</div>
-            {meetings.length === 0 && <p className="text-sm text-[var(--muted)]">No meetings booked.</p>}
+        {/* Meetings overview */}
+        <div className="brutal mt-6 p-5">
+          <div className="eyebrow mb-3">// all meetings</div>
+          {meetings.length === 0 && <p className="text-sm text-[var(--muted)]">No meetings booked.</p>}
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {meetings.map((m) => (
-              <div key={m.id} className="brutal-flat mb-2 p-2 text-xs">
+              <div key={m.id} className="brutal-flat p-2 text-xs">
                 {m.studentName} · {m.date} {m.time} · {m.topic} · <b className="uppercase">{m.status}</b>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="mt-8 text-xs text-[var(--muted)]">
-          <Link to="/login" className="underline">switch account</Link>
-        </p>
+        <p className="mt-8 text-xs text-[var(--muted)]"><Link to="/login" className="underline">switch account</Link></p>
       </section>
     </div>
   )
