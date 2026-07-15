@@ -4,6 +4,7 @@ import { ArrowRight, Loader2 } from 'lucide-react'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
 import { AGENTS } from '../lib/agents'
+import { API_URL } from '../lib/api'
 
 const FIELDS = [
   { key: 'startupName', label: 'Startup name', ph: 'PawPair' },
@@ -34,7 +35,7 @@ export default function Validate() {
     e.preventDefault()
     setBusy(true)
     try {
-      const res = await fetch('http://localhost:8080/api/validate', {
+      const res = await fetch(`${API_URL}/api/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(idea),

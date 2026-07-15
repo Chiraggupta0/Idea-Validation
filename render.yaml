@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: sivp-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      # Set these in the Render dashboard (sync:false = not stored in git):
+      # N8N_WEBHOOK_URL — your PUBLIC n8n webhook, e.g. https://xxxx.n8n.cloud/webhook/validate-idea
+      # CORS_ORIGINS    — your Vercel URL, e.g. https://sivp.vercel.app
+      - key: N8N_WEBHOOK_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
