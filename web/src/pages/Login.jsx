@@ -99,6 +99,28 @@ export default function Login() {
         <p className="mt-2 text-center text-xs text-[var(--muted)]">
           Admin? <Link to="/admin" className="font-semibold underline">Admin portal</Link>
         </p>
+
+        {/* Demo accounts — one click fills the form (handy when showcasing) */}
+        <div className="brutal-flat mt-6 p-3">
+          <div className="eyebrow mb-2">// demo accounts</div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => { setRole('student'); setEmail('student@sivp.dev'); setPassword('student123') }}
+              className="btn btn-light btn-sm"
+            >
+              Student
+            </button>
+            <button
+              type="button"
+              onClick={() => { setRole('mentor'); setEmail('mentor@sivp.dev'); setPassword('mentor123') }}
+              className="btn btn-light btn-sm"
+            >
+              Mentor
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-[var(--muted)]">Click to fill, then press Log in.</p>
+        </div>
       </section>
     </div>
   )

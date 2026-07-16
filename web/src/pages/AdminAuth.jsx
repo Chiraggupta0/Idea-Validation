@@ -90,6 +90,19 @@ export default function AdminAuth() {
         <p className="mt-6 text-center text-xs text-[var(--muted)]">
           Not an admin? <Link to="/login" className="font-semibold underline">Student / mentor login</Link>
         </p>
+
+        {mode === 'login' && (
+          <div className="brutal-flat mt-6 p-3">
+            <div className="eyebrow mb-2">// demo admin</div>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, email: 'admin@sivp.dev', password: 'admin123' })}
+              className="btn btn-light btn-sm"
+            >
+              Fill demo admin
+            </button>
+          </div>
+        )}
       </section>
     </div>
   )
