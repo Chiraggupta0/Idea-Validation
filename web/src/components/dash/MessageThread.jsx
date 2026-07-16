@@ -1,17 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { MessageCircle, Send } from 'lucide-react'
 import { getThread, sendMessage } from '../../lib/store'
 
-export default function MessageThread({ studentId, role, senderName }) {
-  const [thread, setThread] = useState(() => getThread(studentId))
+export default function MessageThread({ studentId, role, senderId, senderName }) {
+  const [thread, setThread] = useState([])
   const [text, setText] = useState('')
 
-  function send(e) {
+  const refresh = useCallback(async () => {
+    setThread(await getThread(studentId))
+  }, [studentId])
+
+  useEffect(() => { refresh() }, [refresh])
+
+  async function send(e) {
     e.preventDefault()
     if (!text.trim()) return
-    sendMessage({ studentId, from: role, name: senderName, text: text.trim() })
-    setThread(getThread(studentId))
+    await sendMessage({ studentId, senderId, from: role, name: senderName, text: text.trim() })
     setText('')
+    refresh()
   }
 
   return (
@@ -22,10 +28,10 @@ export default function MessageThread({ studentId, role, senderName }) {
         {thread.map((m) => (
           <div
             key={m.id}
-            className={`brutal-flat p-2 text-xs ${m.from === role ? 'ml-6' : 'mr-6'}`}
-            style={{ background: m.from === 'mentor' ? '#EAF0FF' : '#fff' }}
+            className={`brutal-flat p-2 text-xs ${m.from_role === role ? 'ml-6' : 'mr-6'}`}
+            style={{ background: m.from_role === 'mentor' ? '#EAF0FF' : '#fff' }}
           >
-            <b>{(m.name || m.from).split(' ')[0]}:</b> {m.text}
+            <b>{(m.name || m.from_role || 'user').split(' ')[0]}:</b> {m.text}
           </div>
         ))}
       </div>

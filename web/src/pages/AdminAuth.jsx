@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, Loader2 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
@@ -12,20 +12,34 @@ export default function AdminAuth() {
   const [mode, setMode] = useState('login')
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [err, setErr] = useState('')
-  const { login, signup } = useAuth()
+  const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
+  const { user, login, signup } = useAuth()
   const nav = useNavigate()
+
+  useEffect(() => {
+    if (user?.role === 'admin') nav('/admin/dashboard', { replace: true })
+  }, [user, nav])
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }))
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault()
     setErr('')
+    setMsg('')
+    setBusy(true)
     try {
-      if (mode === 'login') login({ email: form.email, password: form.password, role: 'admin' })
-      else signup({ ...form, role: 'admin' })
+      if (mode === 'login') {
+        await login({ email: form.email, password: form.password, role: 'admin' })
+      } else {
+        await signup({ ...form, role: 'admin' })
+      }
       nav('/admin/dashboard')
     } catch (e) {
-      setErr(e.message)
+      if (e.message.toLowerCase().includes('confirm')) setMsg(e.message)
+      else setErr(e.message)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -60,23 +74,22 @@ export default function AdminAuth() {
           )}
           <div>
             <label className="eyebrow mb-2 block">Email</label>
-            <input className={inputCls} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required placeholder="admin@sivp.dev" />
+            <input className={inputCls} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required placeholder="admin@college.edu" />
           </div>
           <div>
             <label className="eyebrow mb-2 block">Password</label>
-            <input className={inputCls} type="password" value={form.password} onChange={(e) => set('password', e.target.value)} required placeholder="••••••••" />
+            <input className={inputCls} type="password" value={form.password} onChange={(e) => set('password', e.target.value)} required minLength={6} placeholder="••••••••" />
           </div>
           {err && <p className="brutal-flat p-2 text-xs font-medium" style={{ background: '#FDE2E2', borderColor: '#C0392B' }}>{err}</p>}
-          <SkeuoButton type="submit" size="lg" className="w-full">{mode === 'login' ? 'Enter dashboard' : 'Create admin'}</SkeuoButton>
+          {msg && <p className="brutal-flat p-2 text-xs font-medium" style={{ background: 'var(--yellow)' }}>{msg}</p>}
+          <SkeuoButton type="submit" size="lg" className="w-full">
+            {busy ? <><Loader2 size={16} className="animate-spin" /> Working…</> : mode === 'login' ? 'Enter dashboard' : 'Create admin'}
+          </SkeuoButton>
         </form>
 
         <p className="mt-6 text-center text-xs text-[var(--muted)]">
           Not an admin? <Link to="/login" className="font-semibold underline">Student / mentor login</Link>
         </p>
-        <div className="brutal-flat mt-6 p-3 text-xs text-[var(--ink-soft)]">
-          <div className="eyebrow mb-1">// demo admin</div>
-          admin@sivp.dev / admin123
-        </div>
       </section>
     </div>
   )

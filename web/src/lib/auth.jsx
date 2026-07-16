@@ -1,99 +1,92 @@
-import { createContext, useContext, useState } from 'react'
-
-const SESSION = 'sivpAuth'
-const USERS = 'sivpUsers'
-
-function seedUsers() {
-  const seed = [
-    { id: 'm1', name: 'Dr. Anita Rao', email: 'mentor@sivp.dev', password: 'mentor123', role: 'mentor', expertise: 'SaaS · GTM · Fundraising' },
-    { id: 'a1', name: 'Admin', email: 'admin@sivp.dev', password: 'admin123', role: 'admin' },
-    { id: 's1', name: 'Rahul Sharma', email: 'student@sivp.dev', password: 'student123', role: 'student', mentorId: 'm1', startup: 'PawPair' },
-  ]
-  localStorage.setItem(USERS, JSON.stringify(seed))
-  return seed
-}
-
-export function loadUsers() {
-  const raw = localStorage.getItem(USERS)
-  return raw ? JSON.parse(raw) : seedUsers()
-}
-function saveUsers(u) {
-  localStorage.setItem(USERS, JSON.stringify(u))
-}
-const strip = (u) => {
-  const { password, ...safe } = u
-  return safe
-}
+import { createContext, useContext, useState, useEffect } from 'react'
+import { supabase } from './supabase'
 
 const AuthContext = createContext(null)
 
+/** Auth backed by Supabase. `user` is the row from public.profiles (has role, name, mentor_id…). */
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const r = localStorage.getItem(SESSION)
-    return r ? JSON.parse(r) : null
-  })
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  function persist(u) {
-    setUser(u)
-    if (u) localStorage.setItem(SESSION, JSON.stringify(u))
-    else localStorage.removeItem(SESSION)
-  }
+  useEffect(() => {
+    let active = true
 
-  function signup({ name, email, password, role, startup }) {
-    const users = loadUsers()
-    if (users.find((u) => u.email === email)) throw new Error('That email is already registered.')
-    const newUser = { id: role[0] + Date.now(), name, email, password, role }
-    if (role === 'student') {
-      newUser.startup = startup || ''
-      const mentor = users.find((u) => u.role === 'mentor')
-      if (mentor) newUser.mentorId = mentor.id
+    async function loadProfile(id) {
+      const { data } = await supabase.from('profiles').select('*').eq('id', id).single()
+      if (!active) return
+      setUser(data ?? null)
+      setLoading(false)
     }
-    if (role === 'mentor') newUser.expertise = 'General'
-    users.push(newUser)
-    saveUsers(users)
-    persist(strip(newUser))
-    return strip(newUser)
-  }
 
-  function login({ email, password, role }) {
-    const users = loadUsers()
-    const found = users.find((u) => u.email === email && u.password === password)
-    if (!found) throw new Error('Invalid email or password.')
-    if (role && found.role !== role) throw new Error(`This is a ${found.role} account — use the ${found.role} login.`)
-    persist(strip(found))
-    return strip(found)
-  }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) loadProfile(session.user.id)
+      else if (active) setLoading(false)
+    })
 
-  function loginWithGoogle(role = 'student') {
-    const users = loadUsers()
-    const email = `google.${role}@sivp.dev`
-    let found = users.find((u) => u.email === email)
-    if (!found) {
-      found = { id: role[0] + Date.now(), name: `Google ${role[0].toUpperCase() + role.slice(1)}`, email, password: '', role }
-      if (role === 'student') {
-        const mentor = users.find((u) => u.role === 'mentor')
-        if (mentor) found.mentorId = mentor.id
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) loadProfile(session.user.id)
+      else if (active) {
+        setUser(null)
+        setLoading(false)
       }
-      users.push(found)
-      saveUsers(users)
+    })
+
+    return () => {
+      active = false
+      sub.subscription.unsubscribe()
     }
-    persist(strip(found))
-    return strip(found)
+  }, [])
+
+  /** Sign up with email/password. name/role/startup go into user metadata; a DB
+   *  trigger turns them into a public.profiles row. */
+  async function signup({ name, email, password, role, startup }) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name, role, startup: startup || null } },
+    })
+    if (error) throw new Error(error.message)
+    if (!data.session) {
+      throw new Error('Check your inbox to confirm your email, then log in.')
+    }
+    return data
   }
 
-  function logout() {
-    persist(null)
+  async function login({ email, password, role }) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw new Error(error.message)
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single()
+    if (role && profile && profile.role !== role) {
+      await supabase.auth.signOut()
+      throw new Error(`This is a ${profile.role} account — use the ${profile.role} login.`)
+    }
+    return profile
   }
 
-  function updateProfile(patch) {
+  /** OAuth: 'azure' = Microsoft, 'google' = Google. */
+  async function loginWithProvider(provider) {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/login` },
+    })
+    if (error) throw new Error(error.message)
+  }
+
+  async function logout() {
+    await supabase.auth.signOut()
+    setUser(null)
+  }
+
+  async function updateProfile(patch) {
     if (!user) return
-    const users = loadUsers().map((u) => (u.id === user.id ? { ...u, ...patch } : u))
-    saveUsers(users)
-    persist({ ...user, ...patch })
+    const { data, error } = await supabase.from('profiles').update(patch).eq('id', user.id).select().single()
+    if (error) throw new Error(error.message)
+    setUser(data)
+    return data
   }
 
   return (
-    <AuthContext.Provider value={{ user, signup, login, loginWithGoogle, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, signup, login, loginWithProvider, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   )

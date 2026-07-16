@@ -1,232 +1,219 @@
-import { loadUsers } from './auth'
+import { supabase } from './supabase'
 
-const MEETINGS = 'sivpMeetings'
-const PROGRESS = 'sivpProgress'
-const EVALS = 'sivpEvals'
+/* All functions are async and hit Supabase (Postgres). Row Level Security
+   enforces who can read/write what — see supabase/schema.sql. */
 
-function load(key, def) {
-  const r = localStorage.getItem(key)
-  return r ? JSON.parse(r) : def
+export const STAGES = ['Idea', 'Validation', 'MVP', 'Launch', 'Growth', 'Fundraising']
+export const APP_STAGES = ['Applied', 'Shortlisted', 'Interview', 'Admitted', 'Rejected']
+export const EVENT_TYPES = ['Workshop', 'Demo Day', 'Pitch Night', 'Guest Talk', 'Deadline']
+
+/* ---------- profiles ---------- */
+export async function getUsers() {
+  const { data } = await supabase.from('profiles').select('*').order('created_at')
+  return data ?? []
 }
-function save(key, val) {
-  localStorage.setItem(key, JSON.stringify(val))
+export async function getUser(id) {
+  if (!id) return null
+  const { data } = await supabase.from('profiles').select('*').eq('id', id).single()
+  return data ?? null
+}
+export async function getMentors() {
+  const { data } = await supabase.from('profiles').select('*').eq('role', 'mentor')
+  return data ?? []
+}
+export async function getStudentsForMentor(mentorId) {
+  const { data } = await supabase.from('profiles').select('*').eq('role', 'student').eq('mentor_id', mentorId)
+  return data ?? []
+}
+export async function assignMentor(studentId, mentorId) {
+  await supabase.from('profiles').update({ mentor_id: mentorId || null }).eq('id', studentId)
+}
+export async function setUserRole(id, role) {
+  await supabase.from('profiles').update({ role }).eq('id', id)
+}
+export async function updateUser(id, patch) {
+  await supabase.from('profiles').update(patch).eq('id', id)
+}
+export async function deleteUser(id) {
+  await supabase.from('profiles').delete().eq('id', id)
 }
 
-/* ---------- users ---------- */
-export function getUsers() {
-  return loadUsers()
-}
-export function getUser(id) {
-  return loadUsers().find((u) => u.id === id)
-}
-export function getStudentsForMentor(mentorId) {
-  return loadUsers().filter((u) => u.role === 'student' && u.mentorId === mentorId)
-}
-export function getMentors() {
-  return loadUsers().filter((u) => u.role === 'mentor')
-}
-export function assignMentor(studentId, mentorId) {
-  const users = loadUsers().map((u) => (u.id === studentId ? { ...u, mentorId } : u))
-  localStorage.setItem('sivpUsers', JSON.stringify(users))
-  return users
+/* ---------- public showcase (safe columns, no emails) ---------- */
+export async function getShowcase() {
+  const { data } = await supabase.from('showcase').select('*')
+  return data ?? []
 }
 
-/* ---------- meetings ---------- */
-export function getMeetings() {
-  return load(MEETINGS, [])
+/* ---------- applications ---------- */
+export async function getApplications() {
+  const { data } = await supabase.from('applications').select('*').order('created_at', { ascending: false })
+  return data ?? []
 }
-export function getMeetingsFor(userId, role) {
-  const key = role === 'mentor' ? 'mentorId' : 'studentId'
-  return getMeetings().filter((m) => m[key] === userId)
+export async function addApplication(a) {
+  const { error } = await supabase.from('applications').insert({
+    name: a.name, email: a.email, startup: a.startup, stage: a.stage,
+    pitch: a.pitch, team_size: a.teamSize, why: a.why,
+  })
+  if (error) throw new Error(error.message)
 }
-export function addMeeting(m) {
-  const all = getMeetings()
-  all.push({ id: Date.now(), status: 'requested', ...m })
-  save(MEETINGS, all)
-  return all
-}
-export function updateMeeting(id, patch) {
-  const all = getMeetings().map((m) => (m.id === id ? { ...m, ...patch } : m))
-  save(MEETINGS, all)
-  return all
+export async function updateApplication(id, patch) {
+  await supabase.from('applications').update(patch).eq('id', id)
 }
 
 /* ---------- progress ---------- */
-const DEFAULT_PROGRESS = { stage: 'Idea', percent: 10, note: '', updatedAt: null }
-export function getProgress(studentId) {
-  return load(PROGRESS, {})[studentId] || DEFAULT_PROGRESS
+const DEFAULT_PROGRESS = { stage: 'Idea', percent: 10, note: '', updated_at: null }
+export async function getProgress(studentId) {
+  const { data } = await supabase.from('progress').select('*').eq('student_id', studentId).maybeSingle()
+  return data ?? { ...DEFAULT_PROGRESS, student_id: studentId }
 }
-export function saveProgress(studentId, data) {
-  const all = load(PROGRESS, {})
-  all[studentId] = { ...data, updatedAt: new Date().toISOString() }
-  save(PROGRESS, all)
-  return all[studentId]
+/** Progress for many students at once (dashboards) -> { [studentId]: progress } */
+export async function getProgressMap(studentIds) {
+  if (!studentIds?.length) return {}
+  const { data } = await supabase.from('progress').select('*').in('student_id', studentIds)
+  const map = {}
+  studentIds.forEach((id) => { map[id] = { ...DEFAULT_PROGRESS, student_id: id } })
+  ;(data ?? []).forEach((p) => { map[p.student_id] = p })
+  return map
+}
+export async function saveProgress(studentId, d) {
+  const row = { student_id: studentId, stage: d.stage, percent: d.percent, note: d.note, updated_at: new Date().toISOString() }
+  const { error } = await supabase.from('progress').upsert(row, { onConflict: 'student_id' })
+  if (error) throw new Error(error.message)
+  return row
+}
+
+/* ---------- meetings ---------- */
+export async function getMeetingsFor(userId, role) {
+  const col = role === 'mentor' ? 'mentor_id' : 'student_id'
+  const { data } = await supabase.from('meetings').select('*').eq(col, userId).order('created_at', { ascending: false })
+  return data ?? []
+}
+export async function getMeetings() {
+  const { data } = await supabase.from('meetings').select('*').order('created_at', { ascending: false })
+  return data ?? []
+}
+export async function addMeeting(m) {
+  const { error } = await supabase.from('meetings').insert({
+    student_id: m.studentId, mentor_id: m.mentorId || null,
+    student_name: m.studentName, date: m.date || null, time: m.time, topic: m.topic,
+  })
+  if (error) throw new Error(error.message)
+}
+export async function updateMeeting(id, patch) {
+  await supabase.from('meetings').update(patch).eq('id', id)
 }
 
 /* ---------- evaluations ---------- */
-export function getEvals(studentId) {
-  return load(EVALS, {})[studentId] || []
+export async function getEvals(studentId) {
+  const { data } = await supabase.from('evaluations').select('*').eq('student_id', studentId).order('created_at', { ascending: false })
+  return data ?? []
 }
-export function addEval(studentId, ev) {
-  const all = load(EVALS, {})
-  all[studentId] = [{ id: Date.now(), date: new Date().toISOString(), ...ev }, ...(all[studentId] || [])]
-  save(EVALS, all)
-  return all[studentId]
-}
-
-export const STAGES = ['Idea', 'Validation', 'MVP', 'Launch', 'Growth', 'Fundraising']
-
-/* ---------- tasks / action items ---------- */
-const TASKS = 'sivpTasks'
-export function getTasks(studentId) {
-  return load(TASKS, []).filter((t) => t.studentId === studentId)
-}
-export function addTask(t) {
-  const a = load(TASKS, [])
-  a.push({ id: Date.now(), done: false, createdAt: new Date().toISOString(), ...t })
-  save(TASKS, a)
-}
-export function toggleTask(id) {
-  save(TASKS, load(TASKS, []).map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
-}
-export function deleteTask(id) {
-  save(TASKS, load(TASKS, []).filter((t) => t.id !== id))
+export async function addEval(studentId, ev) {
+  const { error } = await supabase.from('evaluations').insert({
+    student_id: studentId, mentor_id: ev.mentorId || null, by_name: ev.by, score: ev.score, feedback: ev.feedback,
+  })
+  if (error) throw new Error(error.message)
 }
 
-/* ---------- messages (student <-> mentor thread) ---------- */
-const MESSAGES = 'sivpMessages'
-export function getThread(studentId) {
-  return load(MESSAGES, []).filter((m) => m.studentId === studentId).sort((a, b) => a.at - b.at)
+/* ---------- tasks ---------- */
+export async function getTasks(studentId) {
+  const { data } = await supabase.from('tasks').select('*').eq('student_id', studentId).order('created_at')
+  return data ?? []
 }
-export function sendMessage(m) {
-  const a = load(MESSAGES, [])
-  a.push({ id: Date.now(), at: Date.now(), ...m })
-  save(MESSAGES, a)
+export async function addTask(t) {
+  const { error } = await supabase.from('tasks').insert({ student_id: t.studentId, mentor_id: t.mentorId || null, title: t.title })
+  if (error) throw new Error(error.message)
 }
-
-/* ---------- shared resources ---------- */
-const RESOURCES = 'sivpResources'
-export function getResources(studentId) {
-  return load(RESOURCES, []).filter((r) => r.studentId === studentId)
+export async function toggleTask(id, done) {
+  await supabase.from('tasks').update({ done }).eq('id', id)
 }
-export function addResource(r) {
-  const a = load(RESOURCES, [])
-  a.push({ id: Date.now(), ...r })
-  save(RESOURCES, a)
-}
-export function deleteResource(id) {
-  save(RESOURCES, load(RESOURCES, []).filter((r) => r.id !== id))
+export async function deleteTask(id) {
+  await supabase.from('tasks').delete().eq('id', id)
 }
 
-/* ---------- announcements (admin broadcast) ---------- */
-const ANN = 'sivpAnnouncements'
-export function getAnnouncements() {
-  return load(ANN, []).sort((a, b) => b.at - a.at)
+/* ---------- messages ---------- */
+export async function getThread(studentId) {
+  const { data } = await supabase.from('messages').select('*').eq('student_id', studentId).order('created_at')
+  return data ?? []
 }
-export function addAnnouncement(a2) {
-  const a = load(ANN, [])
-  a.push({ id: Date.now(), at: Date.now(), ...a2 })
-  save(ANN, a)
-}
-export function deleteAnnouncement(id) {
-  save(ANN, load(ANN, []).filter((x) => x.id !== id))
+export async function sendMessage(m) {
+  const { error } = await supabase.from('messages').insert({
+    student_id: m.studentId, sender_id: m.senderId, from_role: m.from, name: m.name, text: m.text,
+  })
+  if (error) throw new Error(error.message)
 }
 
-/* ---------- applications (intake portal) ---------- */
-const APPS = 'sivpApplications'
-export const APP_STAGES = ['Applied', 'Shortlisted', 'Interview', 'Admitted', 'Rejected']
-export function getApplications() {
-  return load(APPS, []).sort((a, b) => b.at - a.at)
+/* ---------- resources ---------- */
+export async function getResources(studentId) {
+  const { data } = await supabase.from('resources').select('*').eq('student_id', studentId).order('created_at')
+  return data ?? []
 }
-export function addApplication(a) {
-  const all = load(APPS, [])
-  all.push({ id: Date.now(), at: Date.now(), status: 'Applied', ...a })
-  save(APPS, all)
+export async function addResource(r) {
+  const { error } = await supabase.from('resources').insert({ student_id: r.studentId, title: r.title, url: r.url, note: r.note })
+  if (error) throw new Error(error.message)
 }
-export function updateApplication(id, patch) {
-  save(APPS, load(APPS, []).map((x) => (x.id === id ? { ...x, ...patch } : x)))
-}
-/** Admit an applicant → create a student account (default password: welcome123). */
-export function admitApplicant(app) {
-  const users = loadUsers()
-  if (!users.find((u) => u.email === app.email)) {
-    const mentor = users.find((u) => u.role === 'mentor')
-    users.push({ id: 's' + Date.now(), name: app.name, email: app.email, password: 'welcome123', role: 'student', startup: app.startup, tagline: app.pitch, mentorId: mentor ? mentor.id : undefined })
-    localStorage.setItem('sivpUsers', JSON.stringify(users))
-  }
-  updateApplication(app.id, { status: 'Admitted' })
+export async function deleteResource(id) {
+  await supabase.from('resources').delete().eq('id', id)
 }
 
-/* ---------- events & workshops ---------- */
-const EVENTS = 'sivpEvents'
-export function getEvents() {
-  return load(EVENTS, []).sort((a, b) => (a.date < b.date ? -1 : 1))
+/* ---------- announcements ---------- */
+export async function getAnnouncements() {
+  const { data } = await supabase.from('announcements').select('*').order('created_at', { ascending: false })
+  return data ?? []
 }
-export function addEvent(e) {
-  const all = load(EVENTS, [])
-  all.push({ id: Date.now(), at: Date.now(), rsvps: [], ...e })
-  save(EVENTS, all)
+export async function addAnnouncement(a) {
+  const { error } = await supabase.from('announcements').insert({ title: a.title, body: a.body })
+  if (error) throw new Error(error.message)
 }
-export function deleteEvent(id) {
-  save(EVENTS, load(EVENTS, []).filter((e) => e.id !== id))
-}
-export function toggleRsvp(id, userId) {
-  save(EVENTS, load(EVENTS, []).map((e) => {
-    if (e.id !== id) return e
-    const has = (e.rsvps || []).includes(userId)
-    return { ...e, rsvps: has ? e.rsvps.filter((u) => u !== userId) : [...(e.rsvps || []), userId] }
-  }))
-}
-export const EVENT_TYPES = ['Workshop', 'Demo Day', 'Pitch Night', 'Guest Talk', 'Deadline']
-
-/* ---------- admin user management ---------- */
-export function deleteUser(id) {
-  const u = loadUsers().filter((x) => x.id !== id)
-  localStorage.setItem('sivpUsers', JSON.stringify(u))
-  return u
-}
-export function setUserRole(id, role) {
-  const u = loadUsers().map((x) => (x.id === id ? { ...x, role } : x))
-  localStorage.setItem('sivpUsers', JSON.stringify(u))
-  return u
-}
-export function updateUser(id, patch) {
-  const users = loadUsers().map((x) => (x.id === id ? { ...x, ...patch } : x))
-  localStorage.setItem('sivpUsers', JSON.stringify(users))
-  return users.find((x) => x.id === id)
+export async function deleteAnnouncement(id) {
+  await supabase.from('announcements').delete().eq('id', id)
 }
 
-/* ---------- cohorts / batches ---------- */
-const COHORTS = 'sivpCohorts'
-export function getCohorts() {
-  return load(COHORTS, [])
+/* ---------- events + rsvps ---------- */
+export async function getEvents() {
+  const { data } = await supabase.from('events').select('*, event_rsvps(user_id)').order('date')
+  return (data ?? []).map((e) => ({ ...e, rsvps: (e.event_rsvps ?? []).map((r) => r.user_id) }))
 }
-export function addCohort(c) {
-  const a = load(COHORTS, [])
-  a.push({ id: Date.now(), studentIds: [], ...c })
-  save(COHORTS, a)
+export async function addEvent(e) {
+  const { error } = await supabase.from('events').insert({
+    title: e.title, date: e.date || null, time: e.time, type: e.type, location: e.location, description: e.description,
+  })
+  if (error) throw new Error(error.message)
 }
-export function deleteCohort(id) {
-  save(COHORTS, load(COHORTS, []).filter((c) => c.id !== id))
+export async function deleteEvent(id) {
+  await supabase.from('events').delete().eq('id', id)
 }
-export function setStudentCohort(studentId, cohortId) {
-  const cid = cohortId ? Number(cohortId) : null
-  const cohorts = load(COHORTS, []).map((c) => ({ ...c, studentIds: (c.studentIds || []).filter((s) => s !== studentId) }))
-  const target = cohorts.find((c) => c.id === cid)
-  if (target) target.studentIds.push(studentId)
-  save(COHORTS, cohorts)
-  updateUser(studentId, { cohortId: cid })
-}
-export function getCohortFor(studentId) {
-  return load(COHORTS, []).find((c) => (c.studentIds || []).includes(studentId))
+export async function toggleRsvp(eventId, userId, going) {
+  if (going) await supabase.from('event_rsvps').delete().eq('event_id', eventId).eq('user_id', userId)
+  else await supabase.from('event_rsvps').insert({ event_id: eventId, user_id: userId })
 }
 
-/* ---------- notification read-state ---------- */
-export function getLastSeen(userId) {
-  return load('sivpLastSeen', {})[userId] || 0
+/* ---------- cohorts ---------- */
+export async function getCohorts() {
+  const { data } = await supabase.from('cohorts').select('*').order('created_at')
+  return data ?? []
 }
-export function setLastSeen(userId) {
-  const all = load('sivpLastSeen', {})
-  all[userId] = Date.now()
-  save('sivpLastSeen', all)
+export async function addCohort(c) {
+  const { error } = await supabase.from('cohorts').insert({ name: c.name })
+  if (error) throw new Error(error.message)
+}
+export async function deleteCohort(id) {
+  await supabase.from('cohorts').delete().eq('id', id)
+}
+export async function setStudentCohort(studentId, cohortId) {
+  await supabase.from('profiles').update({ cohort_id: cohortId || null }).eq('id', studentId)
+}
+export async function getCohortFor(cohortId) {
+  if (!cohortId) return null
+  const { data } = await supabase.from('cohorts').select('*').eq('id', cohortId).maybeSingle()
+  return data ?? null
+}
+
+/* ---------- reports ---------- */
+export async function saveReport(studentId, startupName, data) {
+  await supabase.from('reports').insert({ student_id: studentId, startup_name: startupName, data })
+}
+export async function getReports(studentId) {
+  const { data } = await supabase.from('reports').select('*').eq('student_id', studentId).order('created_at', { ascending: false })
+  return data ?? []
 }

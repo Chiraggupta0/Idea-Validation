@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarDays, MapPin, Users, Trash2, Check } from 'lucide-react'
 import { useAuth } from '../lib/auth'
@@ -13,19 +13,21 @@ const typeColor = { 'Demo Day': '#4A3DFF', 'Pitch Night': '#FFD84D', Workshop: '
 export default function Events() {
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
-  const [events, setEvents] = useState(() => getEvents())
+  const [events, setEvents] = useState([])
   const [form, setForm] = useState({ title: '', date: '', time: '', type: 'Workshop', location: '', description: '' })
-  const refresh = () => setEvents(getEvents())
 
-  function create(e) {
+  const refresh = useCallback(async () => setEvents(await getEvents()), [])
+  useEffect(() => { refresh() }, [refresh])
+
+  async function create(e) {
     e.preventDefault()
-    addEvent(form)
-    refresh()
+    await addEvent(form)
     setForm({ title: '', date: '', time: '', type: 'Workshop', location: '', description: '' })
+    refresh()
   }
-  function rsvp(id) {
+  async function rsvp(ev) {
     if (!user) return
-    toggleRsvp(id, user.id)
+    await toggleRsvp(ev.id, user.id, (ev.rsvps ?? []).includes(user.id))
     refresh()
   }
 
@@ -55,7 +57,7 @@ export default function Events() {
         <div className="mt-8 space-y-4">
           {events.length === 0 && <div className="brutal p-6 text-center text-sm text-[var(--ink-soft)]">No events scheduled yet.</div>}
           {events.map((ev) => {
-            const going = user && (ev.rsvps || []).includes(user.id)
+            const going = user && (ev.rsvps ?? []).includes(user.id)
             return (
               <div key={ev.id} className="brutal p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -65,19 +67,19 @@ export default function Events() {
                     <div className="mt-1 flex flex-wrap gap-4 text-xs text-[var(--ink-soft)]">
                       <span className="flex items-center gap-1"><CalendarDays size={13} /> {ev.date} {ev.time}</span>
                       {ev.location && <span className="flex items-center gap-1"><MapPin size={13} /> {ev.location}</span>}
-                      <span className="flex items-center gap-1"><Users size={13} /> {(ev.rsvps || []).length} going</span>
+                      <span className="flex items-center gap-1"><Users size={13} /> {(ev.rsvps ?? []).length} going</span>
                     </div>
                     {ev.description && <p className="mt-2 text-sm text-[var(--ink-soft)]">{ev.description}</p>}
                   </div>
                   <div className="flex flex-col gap-2">
                     {user ? (
-                      <button onClick={() => rsvp(ev.id)} className={going ? 'btn btn-primary btn-sm' : 'btn btn-light btn-sm'}>
+                      <button onClick={() => rsvp(ev)} className={going ? 'btn btn-primary btn-sm' : 'btn btn-light btn-sm'}>
                         {going ? <><Check size={13} /> Going</> : 'RSVP'}
                       </button>
                     ) : (
                       <Link to="/login" className="btn btn-light btn-sm">Log in to RSVP</Link>
                     )}
-                    {isAdmin && <button onClick={() => { deleteEvent(ev.id); refresh() }} className="btn btn-light btn-sm"><Trash2 size={13} /></button>}
+                    {isAdmin && <button onClick={async () => { await deleteEvent(ev.id); refresh() }} className="btn btn-light btn-sm"><Trash2 size={13} /></button>}
                   </div>
                 </div>
               </div>

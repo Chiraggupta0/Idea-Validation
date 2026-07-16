@@ -1,12 +1,11 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
 import { Users, GraduationCap, UserCog, CalendarDays, Megaphone, Trash2, BarChart3, Inbox, Layers } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts'
 import { useAuth } from '../lib/auth'
 import {
-  getUsers, getMentors, assignMentor, getMeetings, getProgress,
+  getUsers, assignMentor, getMeetings, getProgressMap,
   getAnnouncements, addAnnouncement, deleteAnnouncement, deleteUser, setUserRole, STAGES,
-  getApplications, updateApplication, admitApplicant, APP_STAGES,
+  getApplications, updateApplication, APP_STAGES,
   getCohorts, addCohort, deleteCohort, setStudentCohort,
 } from '../lib/store'
 import GlassNav from '../components/GlassNav'
@@ -25,34 +24,42 @@ function StatCard({ icon: Icon, label, value }) {
 
 export default function AdminDashboard() {
   const { user } = useAuth()
-  const [users, setUsers] = useState(() => getUsers())
-  const [anns, setAnns] = useState(() => getAnnouncements())
+  const [users, setUsers] = useState([])
+  const [progressMap, setProgressMap] = useState({})
+  const [anns, setAnns] = useState([])
   const [annForm, setAnnForm] = useState({ title: '', body: '' })
-  const [apps, setApps] = useState(() => getApplications())
-  const [cohorts, setCohorts] = useState(() => getCohorts())
+  const [apps, setApps] = useState([])
+  const [cohorts, setCohorts] = useState([])
   const [cohortName, setCohortName] = useState('')
+  const [meetings, setMeetings] = useState([])
+
+  const loadAll = useCallback(async () => {
+    const [u, a, ap, c, m] = await Promise.all([
+      getUsers(), getAnnouncements(), getApplications(), getCohorts(), getMeetings(),
+    ])
+    setUsers(u); setAnns(a); setApps(ap); setCohorts(c); setMeetings(m)
+    setProgressMap(await getProgressMap(u.filter((x) => x.role === 'student').map((x) => x.id)))
+  }, [])
+
+  useEffect(() => { loadAll() }, [loadAll])
+
   const mentors = users.filter((u) => u.role === 'mentor')
   const students = users.filter((u) => u.role === 'student')
-  const meetings = getMeetings()
+  const stageData = STAGES.map((s) => ({ stage: s, count: students.filter((st) => (progressMap[st.id]?.stage ?? 'Idea') === s).length }))
 
-  const refresh = () => setUsers(getUsers())
-
-  const stageData = STAGES.map((s) => ({ stage: s, count: students.filter((st) => getProgress(st.id).stage === s).length }))
-
-  function postAnn(e) {
+  async function postAnn(e) {
     e.preventDefault()
     if (!annForm.title.trim()) return
-    addAnnouncement(annForm)
-    setAnns(getAnnouncements())
+    await addAnnouncement(annForm)
     setAnnForm({ title: '', body: '' })
+    setAnns(await getAnnouncements())
   }
-
-  function createCohort(e) {
+  async function createCohort(e) {
     e.preventDefault()
     if (!cohortName.trim()) return
-    addCohort({ name: cohortName })
-    setCohorts(getCohorts())
+    await addCohort({ name: cohortName })
     setCohortName('')
+    setCohorts(await getCohorts())
   }
 
   return (
@@ -70,7 +77,7 @@ export default function AdminDashboard() {
           <StatCard icon={CalendarDays} label="Meetings" value={meetings.length} />
         </div>
 
-        {/* Applications / intake */}
+        {/* Applications */}
         <div className="brutal mt-6 p-5">
           <div className="eyebrow mb-4 flex items-center gap-2"><Inbox size={14} /> applications ({apps.filter((a) => a.status === 'Applied').length} new)</div>
           {apps.length === 0 && <p className="text-sm text-[var(--muted)]">No applications yet. Share <b>/apply</b> to collect founder applications.</p>}
@@ -80,19 +87,19 @@ export default function AdminDashboard() {
                 <div className="min-w-0">
                   <div className="font-bold">{a.startup} <span className="text-xs font-normal text-[var(--muted)]">· {a.name} · {a.stage}</span></div>
                   <div className="text-xs text-[var(--ink-soft)]">{a.pitch}</div>
-                  <div className="text-xs text-[var(--muted)]">{a.email}{a.teamSize ? ` · team of ${a.teamSize}` : ''}</div>
+                  <div className="text-xs text-[var(--muted)]">{a.email}{a.team_size ? ` · team of ${a.team_size}` : ''}</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <select className="brutal-flat bg-white px-2 py-1 text-xs outline-none" value={a.status} onChange={(e) => { updateApplication(a.id, { status: e.target.value }); setApps(getApplications()) }}>
-                    {APP_STAGES.map((s) => <option key={s}>{s}</option>)}
-                  </select>
-                  {a.status !== 'Admitted' && (
-                    <button onClick={() => { admitApplicant(a); setApps(getApplications()); setUsers(getUsers()) }} className="btn btn-light btn-sm">Admit</button>
-                  )}
-                </div>
+                <select
+                  className="brutal-flat bg-white px-2 py-1 text-xs outline-none"
+                  value={a.status}
+                  onChange={async (e) => { await updateApplication(a.id, { status: e.target.value }); setApps(await getApplications()) }}
+                >
+                  {APP_STAGES.map((s) => <option key={s}>{s}</option>)}
+                </select>
               </div>
             ))}
           </div>
+          <p className="mt-3 text-xs text-[var(--muted)]">Admitted applicants sign up at <b>/signup</b> with the email they applied with.</p>
         </div>
 
         {/* Analytics + announcements */}
@@ -122,14 +129,14 @@ export default function AdminDashboard() {
               {anns.map((a) => (
                 <div key={a.id} className="brutal-flat flex items-start justify-between gap-2 p-2 text-xs">
                   <div><b>{a.title}</b><div className="text-[var(--ink-soft)]">{a.body}</div></div>
-                  <button onClick={() => { deleteAnnouncement(a.id); setAnns(getAnnouncements()) }} className="text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete"><Trash2 size={13} /></button>
+                  <button onClick={async () => { await deleteAnnouncement(a.id); setAnns(await getAnnouncements()) }} className="text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete"><Trash2 size={13} /></button>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* User management */}
+        {/* Users */}
         <div className="brutal mt-6 p-5">
           <div className="eyebrow mb-4">// manage users</div>
           <div className="overflow-x-auto">
@@ -145,12 +152,12 @@ export default function AdminDashboard() {
               </thead>
               <tbody>
                 {users.map((u) => {
-                  const p = u.role === 'student' ? getProgress(u.id) : null
+                  const p = u.role === 'student' ? progressMap[u.id] : null
                   return (
                     <tr key={u.id} className="border-b border-[var(--neu-dark)]">
                       <td className="py-2">{u.name}<div className="text-xs text-[var(--muted)]">{u.email}</div></td>
                       <td className="py-2">
-                        <select className="brutal-flat bg-white px-2 py-1 text-xs outline-none" value={u.role} onChange={(e) => { setUserRole(u.id, e.target.value); refresh() }}>
+                        <select className="brutal-flat bg-white px-2 py-1 text-xs outline-none" value={u.role} onChange={async (e) => { await setUserRole(u.id, e.target.value); loadAll() }}>
                           <option value="student">student</option>
                           <option value="mentor">mentor</option>
                           <option value="admin">admin</option>
@@ -159,7 +166,7 @@ export default function AdminDashboard() {
                       <td className="py-2">{p ? `${p.stage} · ${p.percent}%` : '—'}</td>
                       <td className="py-2">
                         {u.role === 'student' ? (
-                          <select className="brutal-flat bg-white px-2 py-1 text-xs outline-none" value={u.mentorId || ''} onChange={(e) => { assignMentor(u.id, e.target.value); refresh() }}>
+                          <select className="brutal-flat bg-white px-2 py-1 text-xs outline-none" value={u.mentor_id || ''} onChange={async (e) => { await assignMentor(u.id, e.target.value); loadAll() }}>
                             <option value="">— unassigned —</option>
                             {mentors.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                           </select>
@@ -167,7 +174,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="py-2 text-right">
                         {u.id !== user.id && (
-                          <button onClick={() => { if (confirm(`Delete ${u.name}?`)) { deleteUser(u.id); refresh() } }} className="text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete user"><Trash2 size={14} /></button>
+                          <button onClick={async () => { if (confirm(`Delete ${u.name}?`)) { await deleteUser(u.id); loadAll() } }} className="text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete user"><Trash2 size={14} /></button>
                         )}
                       </td>
                     </tr>
@@ -178,7 +185,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Cohorts / batches */}
+        {/* Cohorts */}
         <div className="brutal mt-6 p-5">
           <div className="eyebrow mb-4 flex items-center gap-2"><Layers size={14} /> cohorts / batches</div>
           <form onSubmit={createCohort} className="mb-4 flex gap-2">
@@ -191,37 +198,35 @@ export default function AdminDashboard() {
               <div key={c.id} className="brutal-flat p-3">
                 <div className="flex items-center justify-between">
                   <b>{c.name}</b>
-                  <button onClick={() => { deleteCohort(c.id); setCohorts(getCohorts()); refresh() }} className="text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete cohort"><Trash2 size={13} /></button>
+                  <button onClick={async () => { await deleteCohort(c.id); loadAll() }} className="text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete cohort"><Trash2 size={13} /></button>
                 </div>
-                <div className="text-xs text-[var(--muted)]">{students.filter((s) => s.cohortId === c.id).length} students</div>
+                <div className="text-xs text-[var(--muted)]">{students.filter((s) => s.cohort_id === c.id).length} students</div>
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {students.filter((s) => s.cohortId === c.id).map((s) => (
-                    <span key={s.id} className="brutal-flat px-1.5 py-0.5 text-[11px] font-bold">{s.name.split(' ')[0]}</span>
+                  {students.filter((s) => s.cohort_id === c.id).map((s) => (
+                    <span key={s.id} className="brutal-flat px-1.5 py-0.5 text-[11px] font-bold">{(s.name || '').split(' ')[0]}</span>
                   ))}
                 </div>
-                <select className="brutal-flat mt-2 w-full bg-white px-2 py-1 text-xs outline-none" value="" onChange={(e) => { if (e.target.value) { setStudentCohort(e.target.value, c.id); setCohorts(getCohorts()); refresh() } }}>
+                <select className="brutal-flat mt-2 w-full bg-white px-2 py-1 text-xs outline-none" value="" onChange={async (e) => { if (e.target.value) { await setStudentCohort(e.target.value, c.id); loadAll() } }}>
                   <option value="">+ add student…</option>
-                  {students.filter((s) => s.cohortId !== c.id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  {students.filter((s) => s.cohort_id !== c.id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Meetings overview */}
+        {/* Meetings */}
         <div className="brutal mt-6 p-5">
           <div className="eyebrow mb-3">// all meetings</div>
           {meetings.length === 0 && <p className="text-sm text-[var(--muted)]">No meetings booked.</p>}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {meetings.map((m) => (
               <div key={m.id} className="brutal-flat p-2 text-xs">
-                {m.studentName} · {m.date} {m.time} · {m.topic} · <b className="uppercase">{m.status}</b>
+                {m.student_name} · {m.date} {m.time} · {m.topic} · <b className="uppercase">{m.status}</b>
               </div>
             ))}
           </div>
         </div>
-
-        <p className="mt-8 text-xs text-[var(--muted)]"><Link to="/login" className="underline">switch account</Link></p>
       </section>
     </div>
   )

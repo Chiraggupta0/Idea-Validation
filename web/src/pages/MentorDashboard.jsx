@@ -1,8 +1,7 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
 import { Users, CalendarCheck, ClipboardCheck, Settings2, TrendingUp, Star } from 'lucide-react'
 import { useAuth } from '../lib/auth'
-import { getStudentsForMentor, getProgress, getMeetingsFor, updateMeeting, addEval, getEvals } from '../lib/store'
+import { getStudentsForMentor, getProgressMap, getMeetingsFor, updateMeeting, addEval, getEvals } from '../lib/store'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
 import TaskList from '../components/dash/TaskList'
@@ -12,18 +11,23 @@ import MessageThread from '../components/dash/MessageThread'
 const inputCls = 'w-full brutal-flat bg-white px-3 py-2 text-sm outline-none focus:shadow-[3px_3px_0_var(--blue)]'
 const statusColor = { requested: '#FFD84D', accepted: '#97C459', declined: '#F09595' }
 
-function MenteeCard({ student, mentorName, mentorId }) {
-  const progress = getProgress(student.id)
-  const [evals, setEvals] = useState(() => getEvals(student.id))
+function MenteeCard({ student, progress, mentor, onEvaluated }) {
+  const [evals, setEvals] = useState([])
   const [form, setForm] = useState({ score: 7, feedback: '' })
   const [tools, setTools] = useState(false)
 
-  function evaluate(e) {
+  const refresh = useCallback(async () => setEvals(await getEvals(student.id)), [student.id])
+  useEffect(() => { refresh() }, [refresh])
+
+  async function evaluate(e) {
     e.preventDefault()
-    addEval(student.id, { by: mentorName, score: Number(form.score), feedback: form.feedback })
-    setEvals(getEvals(student.id))
+    await addEval(student.id, { by: mentor.name, mentorId: mentor.id, score: Number(form.score), feedback: form.feedback })
     setForm({ score: 7, feedback: '' })
+    refresh()
+    onEvaluated?.()
   }
+
+  const p = progress ?? { stage: 'Idea', percent: 0, note: '' }
 
   return (
     <div className="brutal p-5">
@@ -32,13 +36,13 @@ function MenteeCard({ student, mentorName, mentorId }) {
           <div className="font-display text-lg font-bold">{student.name}</div>
           <div className="text-xs text-[var(--muted)]">{student.startup || 'No startup name'} · {student.email}</div>
         </div>
-        <span className="brutal-flat px-2 py-1 text-xs font-bold uppercase" style={{ background: 'var(--yellow)' }}>{progress.stage}</span>
+        <span className="brutal-flat px-2 py-1 text-xs font-bold uppercase" style={{ background: 'var(--yellow)' }}>{p.stage}</span>
       </div>
 
       <div className="mt-3">
-        <div className="flex justify-between text-xs"><span className="font-medium">Progress</span><span>{progress.percent}%</span></div>
-        <div className="neu-track mt-1 h-2"><div className="bar-fill" style={{ width: `${progress.percent}%` }} /></div>
-        {progress.note && <p className="mt-2 text-xs text-[var(--ink-soft)]">"{progress.note}"</p>}
+        <div className="flex justify-between text-xs"><span className="font-medium">Progress</span><span>{p.percent}%</span></div>
+        <div className="neu-track mt-1 h-2"><div className="bar-fill" style={{ width: `${p.percent}%` }} /></div>
+        {p.note && <p className="mt-2 text-xs text-[var(--ink-soft)]">"{p.note}"</p>}
       </div>
 
       <form onSubmit={evaluate} className="mt-4 border-t-2 border-[var(--ink)] pt-3">
@@ -65,9 +69,9 @@ function MenteeCard({ student, mentorName, mentorId }) {
       </button>
       {tools && (
         <div className="mt-4 space-y-5 border-t-2 border-[var(--ink)] pt-4">
-          <TaskList studentId={student.id} mentorId={mentorId} canAssign />
+          <TaskList studentId={student.id} mentorId={mentor.id} canAssign />
           <ResourceList studentId={student.id} canAdd />
-          <MessageThread studentId={student.id} role="mentor" senderName={mentorName} />
+          <MessageThread studentId={student.id} role="mentor" senderId={mentor.id} senderName={mentor.name} />
         </div>
       )}
     </div>
@@ -85,33 +89,47 @@ function Stat({ icon: Icon, label, value }) {
 
 export default function MentorDashboard() {
   const { user } = useAuth()
-  const mentees = getStudentsForMentor(user.id)
-  const [meetings, setMeetings] = useState(() => getMeetingsFor(user.id, 'mentor'))
+  const [mentees, setMentees] = useState([])
+  const [progressMap, setProgressMap] = useState({})
+  const [meetings, setMeetings] = useState([])
+  const [evalCount, setEvalCount] = useState(0)
 
-  function respond(id, status) {
-    updateMeeting(id, { status })
-    setMeetings(getMeetingsFor(user.id, 'mentor'))
+  const loadMeetings = useCallback(async () => setMeetings(await getMeetingsFor(user.id, 'mentor')), [user.id])
+
+  const loadAll = useCallback(async () => {
+    const list = await getStudentsForMentor(user.id)
+    setMentees(list)
+    setProgressMap(await getProgressMap(list.map((s) => s.id)))
+    const counts = await Promise.all(list.map((s) => getEvals(s.id)))
+    setEvalCount(counts.reduce((sum, c) => sum + c.length, 0))
+    loadMeetings()
+  }, [user.id, loadMeetings])
+
+  useEffect(() => { loadAll() }, [loadAll])
+
+  async function respond(id, status) {
+    await updateMeeting(id, { status })
+    loadMeetings()
   }
 
   const avgProgress = mentees.length
-    ? Math.round(mentees.reduce((s, m) => s + getProgress(m.id).percent, 0) / mentees.length)
+    ? Math.round(mentees.reduce((s, m) => s + (progressMap[m.id]?.percent ?? 0), 0) / mentees.length)
     : 0
   const pending = meetings.filter((m) => m.status === 'requested').length
-  const evalsGiven = mentees.reduce((s, m) => s + getEvals(m.id).length, 0)
 
   return (
     <div className="min-h-screen">
       <GlassNav />
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <div className="eyebrow text-[var(--ink-soft)]">// mentor dashboard</div>
-        <h1 className="display mt-2 text-3xl sm:text-4xl">Hi, {user.name.split(' ')[0]}.</h1>
+        <h1 className="display mt-2 text-3xl sm:text-4xl">Hi, {(user.name || 'there').split(' ')[0]}.</h1>
         <p className="mt-1 text-sm text-[var(--ink-soft)]">{user.expertise}</p>
 
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Stat icon={Users} label="Mentees" value={mentees.length} />
           <Stat icon={TrendingUp} label="Avg progress" value={`${avgProgress}%`} />
           <Stat icon={CalendarCheck} label="Pending requests" value={pending} />
-          <Stat icon={Star} label="Evaluations" value={evalsGiven} />
+          <Stat icon={Star} label="Evaluations" value={evalCount} />
         </div>
 
         <div className="brutal mt-6 p-5">
@@ -120,7 +138,7 @@ export default function MentorDashboard() {
           <div className="space-y-2">
             {meetings.map((m) => (
               <div key={m.id} className="brutal-flat flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
-                <span><b>{m.studentName}</b> · {m.date} {m.time} · {m.topic}</span>
+                <span><b>{m.student_name}</b> · {m.date} {m.time} · {m.topic}</span>
                 {m.status === 'requested' ? (
                   <span className="flex gap-2">
                     <button onClick={() => respond(m.id, 'accepted')} className="btn btn-light btn-sm">Accept</button>
@@ -143,13 +161,11 @@ export default function MentorDashboard() {
           </div>
         ) : (
           <div className="mt-3 grid grid-cols-1 gap-6 md:grid-cols-2">
-            {mentees.map((s) => <MenteeCard key={s.id} student={s} mentorName={user.name} mentorId={user.id} />)}
+            {mentees.map((s) => (
+              <MenteeCard key={s.id} student={s} progress={progressMap[s.id]} mentor={user} onEvaluated={loadAll} />
+            ))}
           </div>
         )}
-
-        <p className="mt-8 text-xs text-[var(--muted)]">
-          Not you? <Link to="/login" className="underline">switch account</Link>
-        </p>
       </section>
     </div>
   )

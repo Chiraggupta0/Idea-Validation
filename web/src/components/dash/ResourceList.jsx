@@ -1,18 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { BookOpen, Plus, X, ExternalLink } from 'lucide-react'
 import { getResources, addResource, deleteResource } from '../../lib/store'
 
 export default function ResourceList({ studentId, canAdd }) {
-  const [items, setItems] = useState(() => getResources(studentId))
+  const [items, setItems] = useState([])
   const [form, setForm] = useState({ title: '', url: '', note: '' })
-  const refresh = () => setItems(getResources(studentId))
 
-  function add(e) {
+  const refresh = useCallback(async () => {
+    setItems(await getResources(studentId))
+  }, [studentId])
+
+  useEffect(() => { refresh() }, [refresh])
+
+  async function add(e) {
     e.preventDefault()
     if (!form.title.trim()) return
-    addResource({ studentId, ...form })
-    refresh()
+    await addResource({ studentId, ...form })
     setForm({ title: '', url: '', note: '' })
+    refresh()
   }
 
   return (
@@ -33,7 +38,7 @@ export default function ResourceList({ studentId, canAdd }) {
               {r.note && <div className="text-[var(--ink-soft)]">{r.note}</div>}
             </div>
             {canAdd && (
-              <button onClick={() => { deleteResource(r.id); refresh() }} className="text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete"><X size={12} /></button>
+              <button onClick={async () => { await deleteResource(r.id); refresh() }} className="text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete"><X size={12} /></button>
             )}
           </div>
         ))}

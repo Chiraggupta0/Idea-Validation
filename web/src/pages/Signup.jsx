@@ -1,31 +1,43 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { GraduationCap, UserCog } from 'lucide-react'
+import { GraduationCap, UserCog, Loader2 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
 
 const inputCls =
   'w-full brutal-flat bg-white px-4 py-3 text-sm text-[var(--ink)] outline-none focus:shadow-[3px_3px_0_var(--blue)] placeholder:text-[var(--muted)]'
-const dest = { student: '/student', mentor: '/mentor' }
+const dest = { student: '/student', mentor: '/mentor', admin: '/admin/dashboard' }
 
 export default function Signup() {
   const [role, setRole] = useState('student')
   const [form, setForm] = useState({ name: '', email: '', password: '', startup: '' })
   const [err, setErr] = useState('')
-  const { signup, loginWithGoogle } = useAuth()
+  const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
+  const { user, signup, loginWithProvider } = useAuth()
   const nav = useNavigate()
+
+  useEffect(() => {
+    if (user) nav(dest[user.role] ?? '/', { replace: true })
+  }, [user, nav])
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }))
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault()
     setErr('')
+    setMsg('')
+    setBusy(true)
     try {
-      const u = signup({ ...form, role })
-      nav(dest[u.role])
+      await signup({ ...form, role })
+      // onAuthStateChange will load the profile and the effect above redirects.
     } catch (e) {
-      setErr(e.message)
+      // Email-confirmation flow returns a friendly message rather than a session.
+      if (e.message.toLowerCase().includes('confirm')) setMsg(e.message)
+      else setErr(e.message)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -44,9 +56,7 @@ export default function Signup() {
             <button
               key={r.k}
               onClick={() => setRole(r.k)}
-              className={`brutal-flat flex items-center justify-center gap-2 py-2.5 text-sm font-bold uppercase ${
-                role === r.k ? 'text-white' : 'text-[var(--ink)]'
-              }`}
+              className={`brutal-flat flex items-center justify-center gap-2 py-2.5 text-sm font-bold uppercase ${role === r.k ? 'text-white' : 'text-[var(--ink)]'}`}
               style={role === r.k ? { background: 'var(--blue)' } : { background: '#fff' }}
             >
               <r.icon size={15} /> {r.label}
@@ -61,11 +71,11 @@ export default function Signup() {
           </div>
           <div>
             <label className="eyebrow mb-2 block">Email</label>
-            <input className={inputCls} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required placeholder="you@example.com" />
+            <input className={inputCls} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required placeholder="you@college.edu" />
           </div>
           <div>
             <label className="eyebrow mb-2 block">Password</label>
-            <input className={inputCls} type="password" value={form.password} onChange={(e) => set('password', e.target.value)} required placeholder="Choose a password" />
+            <input className={inputCls} type="password" value={form.password} onChange={(e) => set('password', e.target.value)} required minLength={6} placeholder="At least 6 characters" />
           </div>
           {role === 'student' && (
             <div>
@@ -74,16 +84,23 @@ export default function Signup() {
             </div>
           )}
           {err && <p className="brutal-flat p-2 text-xs font-medium" style={{ background: '#FDE2E2', borderColor: '#C0392B' }}>{err}</p>}
-          <SkeuoButton type="submit" size="lg" className="w-full">Sign up as {role}</SkeuoButton>
+          {msg && <p className="brutal-flat p-2 text-xs font-medium" style={{ background: 'var(--yellow)' }}>{msg}</p>}
+          <SkeuoButton type="submit" size="lg" className="w-full">
+            {busy ? <><Loader2 size={16} className="animate-spin" /> Creating…</> : `Sign up as ${role}`}
+          </SkeuoButton>
         </form>
 
-        <button onClick={() => nav(dest[loginWithGoogle(role).role])} className="btn btn-light btn-md mt-3 w-full">
-          Continue with Google
-        </button>
+        <div className="my-4 flex items-center gap-3">
+          <span className="h-px flex-1 bg-[var(--neu-dark)]" />
+          <span className="eyebrow text-[var(--muted)]">or</span>
+          <span className="h-px flex-1 bg-[var(--neu-dark)]" />
+        </div>
+
+        <button onClick={() => loginWithProvider('azure')} className="btn btn-light btn-md w-full">Continue with Microsoft</button>
+        <button onClick={() => loginWithProvider('google')} className="btn btn-light btn-md mt-2 w-full">Continue with Google</button>
 
         <p className="mt-6 text-center text-sm text-[var(--ink-soft)]">
-          Already have an account?{' '}
-          <Link to="/login" className="font-bold text-[var(--blue)]">Log in</Link>
+          Already have an account? <Link to="/login" className="font-bold text-[var(--blue)]">Log in</Link>
         </p>
       </section>
     </div>

@@ -10,12 +10,18 @@ const inputCls = 'w-full brutal-flat bg-white px-4 py-3 text-sm outline-none foc
 export default function Apply() {
   const [form, setForm] = useState({ name: '', email: '', startup: '', stage: 'Idea', pitch: '', teamSize: '', why: '' })
   const [done, setDone] = useState(false)
+  const [err, setErr] = useState('')
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }))
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault()
-    addApplication(form)
-    setDone(true)
+    setErr('')
+    try {
+      await addApplication(form)
+      setDone(true)
+    } catch (e) {
+      setErr(e.message)
+    }
   }
 
   if (done) {
@@ -57,6 +63,7 @@ export default function Apply() {
           </div>
           <div><label className="eyebrow mb-2 block">One-line pitch</label><input className={inputCls} value={form.pitch} onChange={(e) => set('pitch', e.target.value)} required placeholder="On-demand verified pet-sitting marketplace." /></div>
           <div><label className="eyebrow mb-2 block">Why do you want to join?</label><textarea className={inputCls} rows={3} value={form.why} onChange={(e) => set('why', e.target.value)} required placeholder="What do you need most from an incubator?" /></div>
+          {err && <p className="brutal-flat p-2 text-xs font-medium" style={{ background: '#FDE2E2', borderColor: '#C0392B' }}>{err}</p>}
           <SkeuoButton type="submit" size="lg" className="w-full">Submit application <Send size={16} /></SkeuoButton>
         </form>
 

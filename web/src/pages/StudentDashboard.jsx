@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
 import { UserCog, CalendarPlus, TrendingUp, Star, FileSearch, Megaphone, Rocket, Layers } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { getUser, getProgress, saveProgress, getMeetingsFor, addMeeting, getEvals, getAnnouncements, getCohortFor, STAGES } from '../lib/store'
@@ -15,34 +14,52 @@ const statusColor = { requested: '#FFD84D', accepted: '#97C459', declined: '#F09
 
 export default function StudentDashboard() {
   const { user, updateProfile } = useAuth()
-  const mentor = user.mentorId ? getUser(user.mentorId) : null
-  const cohort = getCohortFor(user.id)
-
-  const [progress, setProgress] = useState(() => getProgress(user.id))
-  const [meetings, setMeetings] = useState(() => getMeetingsFor(user.id, 'student'))
+  const [mentor, setMentor] = useState(null)
+  const [cohort, setCohort] = useState(null)
+  const [progress, setProgress] = useState({ stage: 'Idea', percent: 10, note: '' })
+  const [meetings, setMeetings] = useState([])
+  const [evals, setEvals] = useState([])
+  const [announcements, setAnnouncements] = useState([])
   const [meetForm, setMeetForm] = useState({ date: '', time: '', topic: '' })
   const [profile, setProfile] = useState({ startup: user.startup || '', tagline: user.tagline || '', website: user.website || '' })
   const [saved, setSaved] = useState(false)
-  const evals = getEvals(user.id)
-  const announcements = getAnnouncements()
 
-  function saveProfile(e) {
+  const loadMeetings = useCallback(async () => setMeetings(await getMeetingsFor(user.id, 'student')), [user.id])
+
+  useEffect(() => {
+    ;(async () => {
+      const [m, c, p, ev, an] = await Promise.all([
+        getUser(user.mentor_id),
+        getCohortFor(user.cohort_id),
+        getProgress(user.id),
+        getEvals(user.id),
+        getAnnouncements(),
+      ])
+      setMentor(m)
+      setCohort(c)
+      setProgress({ stage: p.stage, percent: p.percent, note: p.note ?? '', updated_at: p.updated_at })
+      setEvals(ev)
+      setAnnouncements(an)
+      loadMeetings()
+    })()
+  }, [user.id, user.mentor_id, user.cohort_id, loadMeetings])
+
+  async function saveProg(e) {
     e.preventDefault()
-    updateProfile(profile)
+    const row = await saveProgress(user.id, progress)
+    setProgress({ ...progress, updated_at: row.updated_at })
+  }
+  async function book(e) {
+    e.preventDefault()
+    await addMeeting({ studentId: user.id, mentorId: user.mentor_id, studentName: user.name, ...meetForm })
+    setMeetForm({ date: '', time: '', topic: '' })
+    loadMeetings()
+  }
+  async function saveProfile(e) {
+    e.preventDefault()
+    await updateProfile(profile)
     setSaved(true)
     setTimeout(() => setSaved(false), 1500)
-  }
-
-  function saveProg(e) {
-    e.preventDefault()
-    saveProgress(user.id, progress)
-    setProgress(getProgress(user.id))
-  }
-  function book(e) {
-    e.preventDefault()
-    addMeeting({ studentId: user.id, mentorId: user.mentorId, studentName: user.name, ...meetForm })
-    setMeetings(getMeetingsFor(user.id, 'student'))
-    setMeetForm({ date: '', time: '', topic: '' })
   }
 
   return (
@@ -50,7 +67,7 @@ export default function StudentDashboard() {
       <GlassNav />
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <div className="eyebrow text-[var(--ink-soft)]">// student dashboard</div>
-        <h1 className="display mt-2 text-3xl sm:text-4xl">Hi, {user.name.split(' ')[0]}.</h1>
+        <h1 className="display mt-2 text-3xl sm:text-4xl">Hi, {(user.name || 'there').split(' ')[0]}.</h1>
         <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-[var(--ink-soft)]">
           <span>{user.startup ? `Working on ${user.startup}` : 'Track your startup journey with your mentor.'}</span>
           {cohort && (
@@ -89,7 +106,6 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Startup profile → feeds the public showcase */}
         <form onSubmit={saveProfile} className="brutal mt-6 p-5">
           <div className="eyebrow mb-3 flex items-center gap-2"><Rocket size={14} /> startup profile · shown on the public showcase</div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -116,7 +132,7 @@ export default function StudentDashboard() {
             <label className="eyebrow mb-1 mt-3 block text-[var(--muted)]">This week's update</label>
             <textarea className={inputCls} rows={2} value={progress.note} onChange={(e) => setProgress({ ...progress, note: e.target.value })} placeholder="What did you ship this week?" />
             <SkeuoButton type="submit" size="sm" className="mt-3 w-full">Save progress</SkeuoButton>
-            {progress.updatedAt && <p className="mt-2 text-xs text-[var(--muted)]">Last saved {new Date(progress.updatedAt).toLocaleString()}</p>}
+            {progress.updated_at && <p className="mt-2 text-xs text-[var(--muted)]">Last saved {new Date(progress.updated_at).toLocaleString()}</p>}
           </form>
 
           <div className="brutal p-5">
@@ -141,19 +157,16 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Tasks + resources + messages */}
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-          <div className="brutal p-5"><TaskList studentId={user.id} mentorId={user.mentorId} canAssign={false} /></div>
+          <div className="brutal p-5"><TaskList studentId={user.id} mentorId={user.mentor_id} canAssign={false} /></div>
           <div className="brutal p-5"><ResourceList studentId={user.id} canAdd={false} /></div>
-          <div className="brutal p-5"><MessageThread studentId={user.id} role="student" senderName={user.name} /></div>
+          <div className="brutal p-5"><MessageThread studentId={user.id} role="student" senderId={user.id} senderName={user.name} /></div>
         </div>
 
-        {/* Government schemes */}
         <div className="brutal mt-6 p-5">
           <SchemeList stage={progress.stage} />
         </div>
 
-        {/* Evaluations */}
         <div className="brutal mt-6 p-5">
           <div className="eyebrow mb-3 flex items-center gap-2"><Star size={14} /> mentor evaluations</div>
           {evals.length === 0 ? (
@@ -164,7 +177,7 @@ export default function StudentDashboard() {
                 <div key={ev.id} className="brutal-flat p-3">
                   <div className="flex items-center justify-between">
                     <span className="font-bold">Score: {ev.score}/10</span>
-                    <span className="text-xs text-[var(--muted)]">{new Date(ev.date).toLocaleDateString()}</span>
+                    <span className="text-xs text-[var(--muted)]">{new Date(ev.created_at).toLocaleDateString()}</span>
                   </div>
                   <p className="mt-1 text-sm text-[var(--ink-soft)]">{ev.feedback}</p>
                 </div>
@@ -172,10 +185,6 @@ export default function StudentDashboard() {
             </div>
           )}
         </div>
-
-        <p className="mt-8 text-xs text-[var(--muted)]">
-          Not you? <Link to="/login" className="underline">switch account</Link>
-        </p>
       </section>
     </div>
   )

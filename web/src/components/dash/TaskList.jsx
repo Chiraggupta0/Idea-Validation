@@ -1,18 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ListChecks, Plus, X } from 'lucide-react'
 import { getTasks, addTask, toggleTask, deleteTask } from '../../lib/store'
 
 export default function TaskList({ studentId, mentorId, canAssign }) {
-  const [tasks, setTasks] = useState(() => getTasks(studentId))
+  const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
-  const refresh = () => setTasks(getTasks(studentId))
 
-  function add(e) {
+  const refresh = useCallback(async () => {
+    setTasks(await getTasks(studentId))
+  }, [studentId])
+
+  useEffect(() => { refresh() }, [refresh])
+
+  async function add(e) {
     e.preventDefault()
     if (!title.trim()) return
-    addTask({ studentId, mentorId, title: title.trim() })
-    refresh()
+    await addTask({ studentId, mentorId, title: title.trim() })
     setTitle('')
+    refresh()
   }
 
   const done = tasks.filter((t) => t.done).length
@@ -26,10 +31,10 @@ export default function TaskList({ studentId, mentorId, canAssign }) {
         {tasks.length === 0 && <p className="text-xs text-[var(--muted)]">No action items yet.</p>}
         {tasks.map((t) => (
           <div key={t.id} className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={t.done} onChange={() => { toggleTask(t.id); refresh() }} />
+            <input type="checkbox" checked={t.done} onChange={async () => { await toggleTask(t.id, !t.done); refresh() }} />
             <span className={t.done ? 'text-[var(--muted)] line-through' : ''}>{t.title}</span>
             {canAssign && (
-              <button onClick={() => { deleteTask(t.id); refresh() }} className="ml-auto text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete"><X size={13} /></button>
+              <button onClick={async () => { await deleteTask(t.id); refresh() }} className="ml-auto text-[var(--muted)] hover:text-[var(--ink)]" aria-label="Delete"><X size={13} /></button>
             )}
           </div>
         ))}

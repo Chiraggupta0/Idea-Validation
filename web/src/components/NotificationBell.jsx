@@ -1,24 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { useAuth } from '../lib/auth'
-import { getNotifications, timeAgo } from '../lib/notifications'
-import { getLastSeen, setLastSeen } from '../lib/store'
+import { getNotifications, timeAgo, getLastSeen, setLastSeen } from '../lib/notifications'
 
 export default function NotificationBell() {
   const { user } = useAuth()
   const nav = useNavigate()
   const [open, setOpen] = useState(false)
+  const [notes, setNotes] = useState([])
+  const [lastSeen, setSeen] = useState(0)
+
+  useEffect(() => {
+    if (!user) return
+    setSeen(getLastSeen(user.id))
+    getNotifications(user).then(setNotes)
+  }, [user])
+
   if (!user) return null
 
-  const notes = getNotifications(user)
-  const lastSeen = getLastSeen(user.id)
   const unread = notes.filter((x) => x.at > lastSeen).length
 
   function toggle() {
     const willOpen = !open
     setOpen(willOpen)
-    if (willOpen) setLastSeen(user.id)
+    if (willOpen) {
+      setLastSeen(user.id)
+      setSeen(Date.now())
+    }
   }
   function go(link) {
     setOpen(false)
