@@ -16,7 +16,7 @@ export function useReport() {
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
-        if (parsed && parsed.startupName) {
+        if (parsed && parsed.__live) {
           setReport(parsed)
           setIsLive(true)
         }

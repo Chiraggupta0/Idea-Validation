@@ -95,7 +95,7 @@ export default function Report() {
         {/* Financials */}
         <section className="mt-6">
           <FadeUp>
-            <RevenueChart data={r.revenueForecast} />
+            <RevenueChart data={r.revenueForecast} text={r.revenueForecastText} />
           </FadeUp>
         </section>
 

@@ -5,6 +5,7 @@ import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
 import { AGENTS } from '../lib/agents'
 import { API_URL } from '../lib/api'
+import { normalizeReport } from '../lib/normalizeReport'
 
 const FIELDS = [
   { key: 'startupName', label: 'Startup name', ph: 'PawPair' },
@@ -41,14 +42,16 @@ export default function Validate() {
         body: JSON.stringify(idea),
       })
       if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`)
-      const report = await res.json()
+      const raw = await res.json()
       // Log the raw pipeline output so we can see its exact shape (F12 console).
-      console.log('SIVP raw pipeline response:', report)
-      sessionStorage.setItem('sivpReportRaw', JSON.stringify(report))
+      console.log('SIVP raw pipeline response:', raw)
+      const report = normalizeReport(raw)
+      if (!report) throw new Error('Pipeline returned an unexpected shape')
+      sessionStorage.setItem('sivpReportRaw', JSON.stringify(raw))
       sessionStorage.setItem('sivpReport', JSON.stringify(report))
       nav('/report')
     } catch (err) {
-      alert(`Validation failed: ${err.message}\n\nMake sure Spring Boot is running on :8080`)
+      alert(`Validation failed: ${err.message}\n\nA 502 usually means the backend could not reach the n8n webhook — check that n8n and the ngrok tunnel are both running.`)
       setBusy(false)
     }
   }

@@ -75,7 +75,7 @@ export default function ReportSection() {
               <Metric label="Valuation" value={r.valuation} sub="Pre-money estimate" />
               <Metric label="Burn rate" value={r.burnRate} sub="Break-even year 3" />
             </div>
-            <FadeUp><RevenueChart data={r.revenueForecast} /></FadeUp>
+            <FadeUp><RevenueChart data={r.revenueForecast} text={r.revenueForecastText} /></FadeUp>
             <FadeUp delay={0.08}><ScoreBreakdown rows={r.scoreBreakdown} /></FadeUp>
           </div>
         )}

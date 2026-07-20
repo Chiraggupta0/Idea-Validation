@@ -1,6 +1,19 @@
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 
-export default function RevenueChart({ data }) {
+export default function RevenueChart({ data, text }) {
+  // FundIQ returns the forecast as prose rather than a numeric series; show it
+  // as written instead of plotting an invented curve.
+  if (!data || data.length === 0) {
+    return (
+      <div className="neu p-5">
+        <div className="mb-4 text-xs font-bold uppercase tracking-wide">Revenue forecast · FundIQ</div>
+        <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
+          {text || 'No revenue forecast returned.'}
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="neu p-5">
       <div className="mb-4 text-xs font-bold uppercase tracking-wide">Revenue forecast · FundIQ ($K)</div>
