@@ -14,7 +14,6 @@ import {
   X,
 } from 'lucide-react'
 import GlassNav from '../components/GlassNav'
-import Footer from '../components/Footer'
 import FadeUp from '../components/FadeUp'
 import SkeuoButton from '../components/SkeuoButton'
 import { AGENTS } from '../lib/agents'
@@ -210,8 +209,6 @@ export default function Landing() {
           </div>
         </FadeUp>
       </section>
-
-      <Footer />
     </div>
   )
 }

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getShowcase } from '../lib/store'
 import GlassNav from '../components/GlassNav'
-import Footer from '../components/Footer'
 import FadeUp from '../components/FadeUp'
 import SkeuoButton from '../components/SkeuoButton'
 
@@ -66,7 +65,6 @@ export default function Showcase() {
           <SkeuoButton to="/apply" size="lg">Apply to the incubator</SkeuoButton>
         </div>
       </section>
-      <Footer />
     </div>
   )
 }

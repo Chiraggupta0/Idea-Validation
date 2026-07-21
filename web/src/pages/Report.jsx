@@ -1,6 +1,5 @@
 import { Download, Info } from 'lucide-react'
 import GlassNav from '../components/GlassNav'
-import Footer from '../components/Footer'
 import FadeUp from '../components/FadeUp'
 import ScoreGauge from '../components/report/ScoreGauge'
 import { MarketBars, ScoreBreakdown } from '../components/report/Bars'
@@ -124,7 +123,6 @@ export default function Report() {
         </section>
       </div>
 
-      <Footer />
     </div>
   )
 }

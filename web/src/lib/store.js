@@ -217,3 +217,98 @@ export async function getReports(studentId) {
   const { data } = await supabase.from('reports').select('*').eq('student_id', studentId).order('created_at', { ascending: false })
   return data ?? []
 }
+
+/* ---------- community chat (whole incubation centre) ---------- */
+export async function getCommunityMessages(limit = 200) {
+  const { data } = await supabase
+    .from('community_messages')
+    .select('*')
+    .order('created_at', { ascending: true })
+    .limit(limit)
+  return data ?? []
+}
+export async function sendCommunityMessage({ senderId, name, role, text }) {
+  const { error } = await supabase.from('community_messages').insert({ sender_id: senderId, name, role, text })
+  if (error) throw new Error(error.message)
+}
+/** Live updates — returns the channel; caller unsubscribes on unmount. */
+export function subscribeCommunity(onInsert) {
+  return supabase
+    .channel('community')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_messages' }, (payload) => onInsert(payload.new))
+    .subscribe()
+}
+
+/* ---------- document requests ---------- */
+export async function getDocRequests(studentId) {
+  const { data } = await supabase.from('document_requests').select('*').eq('student_id', studentId).order('created_at', { ascending: false })
+  return data ?? []
+}
+export async function addDocRequest(r) {
+  const { error } = await supabase.from('document_requests').insert({
+    student_id: r.studentId, requested_by: r.requestedBy || null, by_name: r.byName, title: r.title, note: r.note,
+  })
+  if (error) throw new Error(error.message)
+}
+
+/* ---------- documents (files in Storage 'documents' bucket) ---------- */
+export async function getDocuments(studentId) {
+  const { data } = await supabase.from('documents').select('*').eq('student_id', studentId).order('created_at', { ascending: false })
+  return data ?? []
+}
+export async function uploadDocument({ studentId, file, title, requestId }) {
+  const path = `${studentId}/${Date.now()}-${file.name}`
+  const up = await supabase.storage.from('documents').upload(path, file, { upsert: false })
+  if (up.error) throw new Error(up.error.message)
+  const { error } = await supabase.from('documents').insert({
+    student_id: studentId, uploaded_by: studentId, request_id: requestId || null,
+    title: title || file.name, file_path: path, file_name: file.name, size: file.size,
+  })
+  if (error) throw new Error(error.message)
+  if (requestId) await supabase.from('document_requests').update({ status: 'fulfilled' }).eq('id', requestId)
+}
+/** Private bucket -> short-lived signed URL for download/preview. */
+export async function getDocumentUrl(path) {
+  const { data, error } = await supabase.storage.from('documents').createSignedUrl(path, 120)
+  if (error) throw new Error(error.message)
+  return data.signedUrl
+}
+export async function deleteDocument(doc) {
+  await supabase.storage.from('documents').remove([doc.file_path])
+  await supabase.from('documents').delete().eq('id', doc.id)
+}
+
+/* ---------- leaderboard (all startups, ranked) ---------- */
+export async function getLeaderboard() {
+  const [{ data: profiles }, { data: prog }] = await Promise.all([
+    supabase.from('profiles').select('id, name, startup, tagline, funding_raised').eq('role', 'student'),
+    supabase.from('progress').select('student_id, stage, percent'),
+  ])
+  const progMap = {}
+  ;(prog ?? []).forEach((p) => { progMap[p.student_id] = p })
+  return (profiles ?? [])
+    .filter((p) => p.startup && p.startup.trim())
+    .map((p) => ({
+      id: p.id,
+      startup: p.startup,
+      founder: p.name,
+      tagline: p.tagline,
+      funding: p.funding_raised ?? 0,
+      stage: progMap[p.id]?.stage ?? 'Idea',
+      percent: progMap[p.id]?.percent ?? 0,
+    }))
+    .sort((a, b) => b.funding - a.funding || b.percent - a.percent)
+}
+
+/* ---------- settings: avatar + password ---------- */
+export async function uploadAvatar(userId, file) {
+  const path = `${userId}/avatar-${Date.now()}-${file.name}`
+  const up = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+  if (up.error) throw new Error(up.error.message)
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+  return data.publicUrl
+}
+export async function changePassword(newPassword) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw new Error(error.message)
+}

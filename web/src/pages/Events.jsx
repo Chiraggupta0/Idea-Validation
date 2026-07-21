@@ -4,7 +4,6 @@ import { CalendarDays, MapPin, Users, Trash2, Check } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { getEvents, addEvent, deleteEvent, toggleRsvp, EVENT_TYPES } from '../lib/store'
 import GlassNav from '../components/GlassNav'
-import Footer from '../components/Footer'
 import SkeuoButton from '../components/SkeuoButton'
 
 const inputCls = 'w-full brutal-flat bg-white px-3 py-2 text-sm outline-none focus:shadow-[3px_3px_0_var(--blue)]'
@@ -87,7 +86,6 @@ export default function Events() {
           })}
         </div>
       </section>
-      <Footer />
     </div>
   )
 }

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { ExternalLink, BookOpen } from 'lucide-react'
 import { RESOURCE_LIB } from '../lib/resources'
 import GlassNav from '../components/GlassNav'
-import Footer from '../components/Footer'
 import FadeUp from '../components/FadeUp'
 
 const ALL = 'All'
@@ -54,7 +53,6 @@ export default function Resources() {
           ))}
         </div>
       </section>
-      <Footer />
     </div>
   )
 }

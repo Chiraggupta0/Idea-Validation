@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { ExternalLink, Target, Clock } from 'lucide-react'
 import { OPPORTUNITIES } from '../lib/opportunities'
 import GlassNav from '../components/GlassNav'
-import Footer from '../components/Footer'
 import FadeUp from '../components/FadeUp'
 
 const ALL = 'All'
@@ -55,7 +54,6 @@ export default function Opportunities() {
           ))}
         </div>
       </section>
-      <Footer />
     </div>
   )
 }

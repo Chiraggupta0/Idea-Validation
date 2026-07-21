@@ -1,7 +1,6 @@
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import GlassNav from '../components/GlassNav'
-import Footer from '../components/Footer'
 import FadeUp from '../components/FadeUp'
 import ReportTabs from '../components/report/ReportTabs'
 import { MarketBars, ScoreBreakdown } from '../components/report/Bars'
@@ -92,7 +91,6 @@ export default function ReportSection() {
           </div>
         )}
       </div>
-      <Footer />
     </div>
   )
 }

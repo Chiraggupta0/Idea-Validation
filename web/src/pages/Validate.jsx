@@ -6,6 +6,8 @@ import SkeuoButton from '../components/SkeuoButton'
 import { AGENTS } from '../lib/agents'
 import { API_URL } from '../lib/api'
 import { normalizeReport } from '../lib/normalizeReport'
+import { useAuth } from '../lib/auth'
+import { saveReport } from '../lib/store'
 
 const FIELDS = [
   { key: 'startupName', label: 'Startup name', ph: 'PawPair' },
@@ -29,6 +31,7 @@ export default function Validate() {
   const [idea, setIdea] = useState(EMPTY)
   const [busy, setBusy] = useState(false)
   const nav = useNavigate()
+  const { user } = useAuth()
 
   const set = (k, v) => setIdea((p) => ({ ...p, [k]: v }))
 
@@ -49,6 +52,14 @@ export default function Validate() {
       if (!report) throw new Error('Pipeline returned an unexpected shape')
       sessionStorage.setItem('sivpReportRaw', JSON.stringify(raw))
       sessionStorage.setItem('sivpReport', JSON.stringify(report))
+      // Persist to the student's portfolio (best-effort; only when logged in).
+      if (user?.id) {
+        try {
+          await saveReport(user.id, report.startupName, { raw, report })
+        } catch (saveErr) {
+          console.warn('Could not save report to portfolio:', saveErr.message)
+        }
+      }
       nav('/report')
     } catch (err) {
       alert(`Validation failed: ${err.message}\n\nA 502 usually means the backend could not reach the n8n webhook — check that n8n and the ngrok tunnel are both running.`)
