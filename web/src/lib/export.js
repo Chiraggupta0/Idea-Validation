@@ -40,6 +40,16 @@ export function exportPDF(r) {
   const CONTENT_BOTTOM = H - 60 // keep clear of the footer
   let y = M
 
+  // jsPDF's built-in Helvetica is Latin-1 only — the ₹ sign and en/em dashes
+  // render as garbage and corrupt letter spacing. Swap them for ASCII.
+  const safe = (s) =>
+    String(s)
+      .replace(/₹/g, 'Rs ')
+      .replace(/[–—]/g, '-')
+      .replace(/[“”]/g, '"')
+      .replace(/[‘’]/g, "'")
+      .replace(/…/g, '...')
+
   const ensure = (needed = 20) => {
     if (y + needed > CONTENT_BOTTOM) {
       doc.addPage()
@@ -51,7 +61,7 @@ export function exportPDF(r) {
     doc.setFont('helvetica', bold ? 'bold' : 'normal')
     doc.setFontSize(size)
     doc.setTextColor(...(rgb || SOFT_RGB))
-    const wrapped = doc.splitTextToSize(String(text), W - M * 2)
+    const wrapped = doc.splitTextToSize(safe(text), W - M * 2)
     wrapped.forEach((t) => {
       ensure(size * 1.4)
       doc.text(t, M, y)
@@ -67,7 +77,7 @@ export function exportPDF(r) {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(12)
     doc.setTextColor(...BLUE_RGB)
-    doc.text(title.toUpperCase(), M, y)
+    doc.text(safe(title).toUpperCase(), M, y)
     y += 7
     doc.setDrawColor(...BLUE_RGB)
     doc.setLineWidth(1.6)
@@ -82,11 +92,11 @@ export function exportPDF(r) {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(9)
     doc.setTextColor(...MUTED_RGB)
-    doc.text(label.toUpperCase(), M, top)
+    doc.text(safe(label).toUpperCase(), M, top)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(11)
     doc.setTextColor(...INK_RGB)
-    const wrapped = doc.splitTextToSize(String(value), W - M * 2 - 132)
+    const wrapped = doc.splitTextToSize(safe(value), W - M * 2 - 132)
     wrapped.forEach((t, i) => {
       if (i > 0) ensure(15)
       doc.text(t, M + 132, y)
@@ -100,12 +110,12 @@ export function exportPDF(r) {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9)
   doc.setTextColor(...MUTED_RGB)
-  doc.text(`// VALIDATION REPORT · ${r.validatedAt}`, M, y)
+  doc.text(safe(`// VALIDATION REPORT · ${r.validatedAt}`), M, y)
   y += 24
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(30)
   doc.setTextColor(...INK_RGB)
-  doc.text(String(r.startupName).toUpperCase(), M, y)
+  doc.text(safe(String(r.startupName).toUpperCase()), M, y)
   y += 20
   body(`${r.industry} · ${r.geographicMarket}`, 10, false, MUTED_RGB)
   gap(8)
@@ -115,16 +125,17 @@ export function exportPDF(r) {
   y += 6
 
   // ---- Readiness highlight ----
-  gap(8)
+  gap(10)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(15)
+  doc.setFontSize(16)
   doc.setTextColor(...BLUE_RGB)
-  doc.text(`Investor readiness  ${r.investorReadinessScore}/100`, M, y)
+  doc.text(safe(`Investor readiness  ${r.investorReadinessScore}/100`), M, y)
+  y += 16
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(11)
+  doc.setFontSize(10)
   doc.setTextColor(...MUTED_RGB)
-  doc.text(`· ${r.readinessCategory}`, M + doc.getTextWidth(`Investor readiness  ${r.investorReadinessScore}/100  `), y)
-  y += 8
+  doc.text(safe(r.readinessCategory), M, y)
+  y += 6
 
   // ---- Key metrics ----
   section('Key metrics')

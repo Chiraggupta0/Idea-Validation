@@ -12,11 +12,17 @@ import { useReport } from '../lib/useReport'
 const VALID = ['market', 'financials', 'swot']
 
 function Metric({ label, value, sub }) {
+  // Live pipeline values can be a full sentence; drop long ones to a smaller
+  // wrapping size so the card keeps its shape instead of ballooning.
+  const long = typeof value === 'string' && value.length > 16
+  const valueClass = long
+    ? 'text-base leading-snug'
+    : 'text-3xl tracking-tight'
   return (
-    <div className="neu p-5">
+    <div className="neu flex flex-col p-5">
       <div className="text-xs font-medium text-[var(--muted)]">{label}</div>
-      <div className="mt-1 font-display text-3xl font-bold tracking-tight">{value}</div>
-      {sub && <div className="mt-1 text-xs text-[var(--muted)]">{sub}</div>}
+      <div className={`mt-1 font-display font-bold ${valueClass}`}>{value}</div>
+      {sub && <div className="mt-auto pt-1 text-xs text-[var(--muted)]">{sub}</div>}
     </div>
   )
 }
