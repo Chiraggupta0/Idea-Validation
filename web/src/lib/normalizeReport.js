@@ -25,6 +25,26 @@ function tighten(text) {
   return text.replace(/^\s*(estimated|estimate:|approximately|around|roughly|about)\s*/i, '').trim()
 }
 
+/**
+ * Keeps figures in Indian Rupees only. Agents often append a USD conversion
+ * like "(~ $1.25 billion USD)" and a redundant "(INR)" tag — strip both so the
+ * app shows a single ₹ figure.
+ */
+function inr(text) {
+  if (typeof text !== 'string') return text
+  return text
+    .replace(/\s*\([^)]*\$[^)]*\)/g, '') // drop any parenthetical containing "$"
+    .replace(/\s*\(INR\)/gi, '')
+    .replace(/\s+([.,])/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+/** clean → strip USD → drop lead-in words, for all money fields. */
+function money(v) {
+  return tighten(inr(clean(v)))
+}
+
 /** Reads a key tolerantly — NEXUS has emitted `"startupName "` with a trailing space. */
 function loose(obj, key) {
   if (!obj) return ''
@@ -109,17 +129,17 @@ export function normalizeReport(raw) {
     pmfScore: Number(vision.pmfScore) || 0,
     successProbability: Number(fund.successProbability) || 0,
 
-    fundingRequirement: tighten(clean(fund.fundingRequirement)) || '—',
-    valuation: tighten(clean(fund.valuation)) || '—',
-    burnRate: tighten(clean(fund.burnRate)) || '—',
+    fundingRequirement: money(fund.fundingRequirement) || '—',
+    valuation: money(fund.valuation) || '—',
+    burnRate: money(fund.burnRate) || '—',
 
-    tam: tighten(clean(market.tam)) || '—',
-    sam: tighten(clean(market.sam)) || '—',
-    som: tighten(clean(market.som)) || '—',
+    tam: money(market.tam) || '—',
+    sam: money(market.sam) || '—',
+    som: money(market.som) || '—',
     tamPct: tamM ? 100 : 0,
     samPct: pct(samM),
     somPct: pct(somM),
-    marketNote: marketNote || clean(market.industryOverview),
+    marketNote: inr(marketNote || clean(market.industryOverview)),
 
     scoreBreakdown: SCORE_ROWS.map((r) => ({
       label: r.label,
@@ -137,8 +157,8 @@ export function normalizeReport(raw) {
     // FundIQ returns prose, not a numeric series — the chart is skipped and the
     // text shown instead rather than inventing a five-year curve.
     revenueForecast: [],
-    revenueForecastText: clean(fund.revenueForecast),
+    revenueForecastText: inr(clean(fund.revenueForecast)),
 
-    executiveSummary: clean(forge.executiveSummary) || clean(vision.verdict),
+    executiveSummary: inr(clean(forge.executiveSummary) || clean(vision.verdict)),
   }
 }
