@@ -3,12 +3,12 @@ export function MarketBars({ rows, note }) {
     <div className="neu p-5">
       <div className="mb-4 text-xs font-bold uppercase tracking-wide">Market size · MarketMind</div>
       {rows.map((r) => (
-        <div key={r.label} className="mb-3 last:mb-0">
-          <div className="mb-1 flex justify-between text-xs">
-            <span className="font-medium">{r.label}</span>
-            <span className="text-[var(--muted)]">{r.value}</span>
+        <div key={r.label} className="mb-4 last:mb-0">
+          <div className="flex items-baseline gap-2 text-xs">
+            <span className="shrink-0 font-semibold">{r.label}</span>
+            <span className="leading-snug text-[var(--muted)]">{r.value}</span>
           </div>
-          <div className="neu-track h-3">
+          <div className="neu-track mt-1.5 h-3">
             <div className="bar-fill" style={{ width: `${r.pct}%` }} />
           </div>
         </div>

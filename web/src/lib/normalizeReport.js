@@ -15,6 +15,16 @@ function clean(v) {
   return t
 }
 
+/**
+ * Drops redundant lead-in words ("Estimate:", "Approximately", …) so figure
+ * values stay compact in the metric tiles. The label + sub already say these
+ * are estimates, so removing the prefix loses no meaning.
+ */
+function tighten(text) {
+  if (typeof text !== 'string') return text
+  return text.replace(/^\s*(estimated|estimate:|approximately|around|roughly|about)\s*/i, '').trim()
+}
+
 /** Reads a key tolerantly — NEXUS has emitted `"startupName "` with a trailing space. */
 function loose(obj, key) {
   if (!obj) return ''
@@ -99,13 +109,13 @@ export function normalizeReport(raw) {
     pmfScore: Number(vision.pmfScore) || 0,
     successProbability: Number(fund.successProbability) || 0,
 
-    fundingRequirement: clean(fund.fundingRequirement) || '—',
-    valuation: clean(fund.valuation) || '—',
-    burnRate: clean(fund.burnRate) || '—',
+    fundingRequirement: tighten(clean(fund.fundingRequirement)) || '—',
+    valuation: tighten(clean(fund.valuation)) || '—',
+    burnRate: tighten(clean(fund.burnRate)) || '—',
 
-    tam: clean(market.tam) || '—',
-    sam: clean(market.sam) || '—',
-    som: clean(market.som) || '—',
+    tam: tighten(clean(market.tam)) || '—',
+    sam: tighten(clean(market.sam)) || '—',
+    som: tighten(clean(market.som)) || '—',
     tamPct: tamM ? 100 : 0,
     samPct: pct(samM),
     somPct: pct(somM),

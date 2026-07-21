@@ -11,11 +11,18 @@ import { useReport } from '../lib/useReport'
 import { exportPDF, exportDOCX, exportPPTX } from '../lib/export'
 
 function Stat({ label, value, sub }) {
+  // Sample values are terse ("$3M–$6M"); live pipeline values can be a full
+  // sentence. Drop to a smaller wrapping size for long ones so the tile keeps
+  // its shape instead of ballooning into a headline.
+  const long = typeof value === 'string' && value.length > 16
+  const valueClass = long
+    ? 'text-sm leading-snug'
+    : 'text-2xl tracking-tight sm:text-3xl'
   return (
-    <div className="neu-sm p-4">
+    <div className="neu-sm flex flex-col p-4">
       <div className="text-xs font-medium text-[var(--muted)]">{label}</div>
-      <div className="mt-1 font-display text-2xl font-bold tracking-tight sm:text-3xl">{value}</div>
-      {sub && <div className="mt-0.5 text-xs text-[var(--muted)]">{sub}</div>}
+      <div className={`mt-1 font-display font-bold ${valueClass}`}>{value}</div>
+      {sub && <div className="mt-auto pt-1 text-xs text-[var(--muted)]">{sub}</div>}
     </div>
   )
 }
