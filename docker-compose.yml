@@ -1,0 +1,31 @@
+# Runs both services locally in Docker. n8n itself is NOT containerized here —
+# it still runs via `npx n8n` + ngrok as documented, and N8N_WEBHOOK_URL below
+# must point at that public ngrok URL (a localhost URL is not reachable from
+# inside the backend container).
+#
+# Usage:
+#   cp web/.env.example .env        # fill in the values below, then:
+#   docker compose up --build
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL:?set N8N_WEBHOOK_URL to your ngrok webhook URL}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:8081}
+      N8N_CONNECT_TIMEOUT_MS: ${N8N_CONNECT_TIMEOUT_MS:-10000}
+      N8N_READ_TIMEOUT_MS: ${N8N_READ_TIMEOUT_MS:-180000}
+
+  web:
+    build:
+      context: ./web
+      args:
+        VITE_API_URL: http://localhost:8080
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:?set VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:?set VITE_SUPABASE_ANON_KEY}
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
