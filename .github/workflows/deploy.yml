@@ -1,0 +1,61 @@
+name: Build and deploy to AWS
+
+# Runs on every push to main that touches the backend, the frontend, or this
+# workflow file itself — builds both Docker images, pushes them to Docker
+# Hub, then SSHes into the EC2 instance to pull and restart.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'web/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sivp-backend:latest
+
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./web
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sivp-web:latest
+          build-args: |
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
+            VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+  deploy:
+    needs: [build-backend, build-web]
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH in and redeploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/sivp
+            docker compose pull
+            docker compose up -d
+            docker image prune -f
