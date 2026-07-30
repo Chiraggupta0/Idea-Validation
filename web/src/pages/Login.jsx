@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { GraduationCap, UserCog, Loader2 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import GlassNav from '../components/GlassNav'
@@ -17,11 +17,16 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
   const { user, login, loginWithProvider } = useAuth()
   const nav = useNavigate()
+  const location = useLocation()
+  // Where ProtectedRoute sent them from (e.g. /validate) — fall back to the
+  // role's dashboard if they arrived here directly.
+  const from = location.state?.from?.pathname
 
-  // If already signed in (incl. returning from Microsoft OAuth), go to the dashboard.
+  // If already signed in (incl. returning from Microsoft OAuth), continue
+  // wherever they were headed, or go to the dashboard.
   useEffect(() => {
-    if (user) nav(dest[user.role] ?? '/', { replace: true })
-  }, [user, nav])
+    if (user) nav(from || dest[user.role] || '/', { replace: true })
+  }, [user, nav, from])
 
   async function submit(e) {
     e.preventDefault()
@@ -29,7 +34,7 @@ export default function Login() {
     setBusy(true)
     try {
       const profile = await login({ email, password, role })
-      nav(dest[profile?.role] ?? '/')
+      nav(from || dest[profile?.role] || '/')
     } catch (e) {
       setErr(e.message)
     } finally {
@@ -95,7 +100,7 @@ export default function Login() {
         <button onClick={() => oauth('google')} className="btn btn-light btn-md w-full">Continue with Google</button>
 
         <p className="mt-6 text-center text-sm text-[var(--ink-soft)]">
-          New here? <Link to="/signup" className="font-bold text-[var(--blue)]">Create an account</Link>
+          New here? <Link to="/signup" state={location.state} className="font-bold text-[var(--blue)]">Create an account</Link>
         </p>
         <p className="mt-2 text-center text-xs text-[var(--muted)]">
           Admin? <Link to="/admin" className="font-semibold underline">Admin portal</Link>

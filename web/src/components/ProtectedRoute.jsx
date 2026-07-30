@@ -1,9 +1,10 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
 /** Guards a route by auth + role. `role` can be a string or array of allowed roles. */
 export default function ProtectedRoute({ role, children }) {
   const { user, loading } = useAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -12,7 +13,9 @@ export default function ProtectedRoute({ role, children }) {
       </div>
     )
   }
-  if (!user) return <Navigate to="/login" replace />
+  // Remember where the user was headed so login/signup can send them back
+  // here instead of always landing on the generic dashboard.
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />
 
   if (role) {
     const allowed = Array.isArray(role) ? role : [role]

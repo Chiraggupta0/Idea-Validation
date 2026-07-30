@@ -37,7 +37,7 @@ createRoot(document.getElementById('root')).render(
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/validate" element={<Validate />} />
+          <Route path="/validate" element={<ProtectedRoute><Validate /></ProtectedRoute>} />
           <Route path="/report" element={<Report />} />
           <Route path="/report/:section" element={<ReportSection />} />
 

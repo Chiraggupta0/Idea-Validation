@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { GraduationCap, UserCog, Loader2 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import GlassNav from '../components/GlassNav'
@@ -17,10 +17,12 @@ export default function Signup() {
   const [busy, setBusy] = useState(false)
   const { user, signup, loginWithProvider } = useAuth()
   const nav = useNavigate()
+  const location = useLocation()
+  const from = location.state?.from?.pathname
 
   useEffect(() => {
-    if (user) nav(dest[user.role] ?? '/', { replace: true })
-  }, [user, nav])
+    if (user) nav(from || dest[user.role] || '/', { replace: true })
+  }, [user, nav, from])
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }))
 
@@ -100,7 +102,7 @@ export default function Signup() {
         <button onClick={() => loginWithProvider('google')} className="btn btn-light btn-md mt-2 w-full">Continue with Google</button>
 
         <p className="mt-6 text-center text-sm text-[var(--ink-soft)]">
-          Already have an account? <Link to="/login" className="font-bold text-[var(--blue)]">Log in</Link>
+          Already have an account? <Link to="/login" state={location.state} className="font-bold text-[var(--blue)]">Log in</Link>
         </p>
       </section>
     </div>
