@@ -1,14 +1,16 @@
 name: Build and deploy to AWS
 
 # Runs on every push to main that touches the backend, the frontend, or this
-# workflow file itself — builds both Docker images, pushes them to Docker
-# Hub, then SSHes into the EC2 instance to pull and restart.
+# workflow file itself — builds both Docker images tagged by commit SHA,
+# pushes them to Docker Hub, syncs the production compose file to the EC2
+# instance, deploys that exact tag, and verifies it actually came up healthy.
 on:
   push:
     branches: [main]
     paths:
       - 'backend/**'
       - 'web/**'
+      - 'docker-compose.prod.yml'
       - '.github/workflows/deploy.yml'
 
 jobs:
@@ -24,7 +26,9 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sivp-backend:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/sivp-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/sivp-backend:${{ github.sha }}
 
   build-web:
     runs-on: ubuntu-latest
@@ -38,7 +42,9 @@ jobs:
         with:
           context: ./web
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sivp-web:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/sivp-web:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/sivp-web:${{ github.sha }}
           build-args: |
             VITE_API_URL=${{ secrets.VITE_API_URL }}
             VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
@@ -48,14 +54,45 @@ jobs:
     needs: [build-backend, build-web]
     runs-on: ubuntu-latest
     steps:
-      - name: SSH in and redeploy
+      - uses: actions/checkout@v4
+
+      - name: Sync production compose file to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "~/sivp"
+          strip_components: 0
+
+      - name: Deploy exact image tag and verify
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: IMAGE_TAG
           script: |
+            set -e
             cd ~/sivp
+            mv docker-compose.prod.yml docker-compose.yml
+            export IMAGE_TAG="${IMAGE_TAG}"
             docker compose pull
             docker compose up -d --force-recreate
             docker image prune -f
+
+            echo "Verifying deploy..."
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+              if curl -sf http://localhost:8080/api/health >/dev/null && curl -sf http://localhost:80/ >/dev/null; then
+                echo "Backend and web are both up."
+                exit 0
+              fi
+              echo "Not ready yet, retrying ($i/10)..."
+              sleep 3
+            done
+            echo "Deploy verification FAILED — backend or web did not come up healthy."
+            docker compose logs --tail 30
+            exit 1
+        env:
+          IMAGE_TAG: ${{ github.sha }}

@@ -1,0 +1,40 @@
+# The EC2 instance's actual running config. Copied to ~/sivp/docker-compose.yml
+# by the deploy workflow on every push — the server never hand-edits this file,
+# so there's no drift between what's in git and what's actually running.
+#
+# IMAGE_TAG is set to the deploying commit's SHA by CI, so each deploy
+# references an exact, unambiguous image — never the mutable `:latest` tag —
+# which guarantees docker compose always recreates the container.
+
+services:
+  backend:
+    image: chiraggupta01/sivp-backend:${IMAGE_TAG:-latest}
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      N8N_WEBHOOK_URL: http://n8n:5678/webhook/validate-idea
+      CORS_ORIGINS: http://34.232.142.24
+      N8N_CONNECT_TIMEOUT_MS: 10000
+      N8N_READ_TIMEOUT_MS: 180000
+
+  web:
+    image: chiraggupta01/sivp-web:${IMAGE_TAG:-latest}
+    restart: always
+    ports:
+      - "80:80"
+
+  n8n:
+    image: n8nio/n8n:latest
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_HOST: 34.232.142.24
+      N8N_PROTOCOL: http
+      N8N_PORT: 5678
+      WEBHOOK_URL: http://34.232.142.24:5678/
+      GENERIC_TIMEZONE: Asia/Kolkata
+      N8N_SECURE_COOKIE: "false"
+    volumes:
+      - /home/ubuntu/n8n-data:/home/node/.n8n
