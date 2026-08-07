@@ -37,13 +37,15 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  /** Sign up with email/password. name/role/startup go into user metadata; a DB
-   *  trigger turns them into a public.profiles row. */
-  async function signup({ name, email, password, role, startup }) {
+  /** Sign up with email/password. Only name/startup go into user metadata — the
+   *  DB trigger decides role and institution from a pending invitation or the
+   *  email domain. Role is deliberately NOT sent: it is client-controlled data
+   *  and must never determine privileges. */
+  async function signup({ name, email, password, startup }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name, role, startup: startup || null } },
+      options: { data: { name, startup: startup || null } },
     })
     if (error) throw new Error(error.message)
     if (!data.session) {

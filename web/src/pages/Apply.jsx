@@ -1,17 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, Send } from 'lucide-react'
-import { addApplication, STAGES } from '../lib/store'
+import { addApplication, getInstitutions, STAGES } from '../lib/store'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
 
 const inputCls = 'w-full brutal-flat bg-white px-4 py-3 text-sm outline-none focus:shadow-[3px_3px_0_var(--blue)] placeholder:text-[var(--muted)]'
 
 export default function Apply() {
-  const [form, setForm] = useState({ name: '', email: '', startup: '', stage: 'Idea', pitch: '', teamSize: '', why: '' })
+  const [form, setForm] = useState({ name: '', email: '', startup: '', stage: 'Idea', pitch: '', teamSize: '', why: '', institutionId: '' })
+  const [institutions, setInstitutions] = useState([])
   const [done, setDone] = useState(false)
   const [err, setErr] = useState('')
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }))
+
+  // Applications go to a specific incubator, so the applicant picks one.
+  useEffect(() => {
+    getInstitutions().then((list) => {
+      setInstitutions(list)
+      if (list.length === 1) set('institutionId', list[0].id)
+    })
+  }, [])
 
   async function submit(e) {
     e.preventDefault()
@@ -51,6 +60,13 @@ export default function Apply() {
         </p>
 
         <form onSubmit={submit} className="mt-8 space-y-5">
+          <div>
+            <label className="eyebrow mb-2 block">Incubator you're applying to</label>
+            <select className={inputCls} value={form.institutionId} onChange={(e) => set('institutionId', e.target.value)} required>
+              <option value="">Select an institution…</option>
+              {institutions.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+            </select>
+          </div>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div><label className="eyebrow mb-2 block">Full name</label><input className={inputCls} value={form.name} onChange={(e) => set('name', e.target.value)} required placeholder="Your name" /></div>
             <div><label className="eyebrow mb-2 block">Email</label><input className={inputCls} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required placeholder="you@college.edu" /></div>

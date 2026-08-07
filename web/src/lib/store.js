@@ -7,6 +7,40 @@ export const STAGES = ['Idea', 'Validation', 'MVP', 'Launch', 'Growth', 'Fundrai
 export const APP_STAGES = ['Applied', 'Shortlisted', 'Interview', 'Admitted', 'Rejected']
 export const EVENT_TYPES = ['Workshop', 'Demo Day', 'Pitch Night', 'Guest Talk', 'Deadline']
 
+/* ---------- institutions (tenants) ---------- */
+export async function getInstitutions() {
+  const { data } = await supabase.from('institutions').select('*').order('name')
+  return data ?? []
+}
+export async function getMyInstitution(institutionId) {
+  if (!institutionId) return null
+  const { data } = await supabase.from('institutions').select('*').eq('id', institutionId).maybeSingle()
+  return data ?? null
+}
+export async function updateInstitution(id, patch) {
+  const { error } = await supabase.from('institutions').update(patch).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+/* ---------- invitations ----------
+   Mentors and admins can only join by invitation; students may also self-sign-up
+   if their email domain is registered to the institution. The DB trigger reads
+   these rows at signup — role is never taken from the client. */
+export async function getInvitations() {
+  const { data } = await supabase.from('invitations').select('*').order('created_at', { ascending: false })
+  return data ?? []
+}
+export async function addInvitation({ institutionId, email, role, invitedBy, byName }) {
+  const { error } = await supabase.from('invitations').insert({
+    institution_id: institutionId, email: email.trim().toLowerCase(), role,
+    invited_by: invitedBy || null, by_name: byName,
+  })
+  if (error) throw new Error(error.message)
+}
+export async function deleteInvitation(id) {
+  await supabase.from('invitations').delete().eq('id', id)
+}
+
 /* ---------- profiles ---------- */
 export async function getUsers() {
   const { data } = await supabase.from('profiles').select('*').order('created_at')
@@ -49,10 +83,13 @@ export async function getApplications() {
   const { data } = await supabase.from('applications').select('*').order('created_at', { ascending: false })
   return data ?? []
 }
+/** Applications are submitted anonymously, so the institution being applied to
+ *  must be passed explicitly — there is no session to derive it from. */
 export async function addApplication(a) {
   const { error } = await supabase.from('applications').insert({
     name: a.name, email: a.email, startup: a.startup, stage: a.stage,
     pitch: a.pitch, team_size: a.teamSize, why: a.why,
+    institution_id: a.institutionId,
   })
   if (error) throw new Error(error.message)
 }

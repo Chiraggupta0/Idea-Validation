@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { GraduationCap, UserCog, Loader2 } from 'lucide-react'
+import { Loader2, Info } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
@@ -10,7 +10,6 @@ const inputCls =
 const dest = { student: '/student', mentor: '/mentor', admin: '/admin/dashboard' }
 
 export default function Signup() {
-  const [role, setRole] = useState('student')
   const [form, setForm] = useState({ name: '', email: '', password: '', startup: '' })
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
@@ -32,8 +31,9 @@ export default function Signup() {
     setMsg('')
     setBusy(true)
     try {
-      await signup({ ...form, role })
+      await signup(form)
       // onAuthStateChange will load the profile and the effect above redirects.
+      // Role/institution are assigned server-side from an invite or email domain.
     } catch (e) {
       // Email-confirmation flow returns a friendly message rather than a session.
       if (e.message.toLowerCase().includes('confirm')) setMsg(e.message)
@@ -50,20 +50,12 @@ export default function Signup() {
         <div className="eyebrow text-[var(--ink-soft)]">// join sivp</div>
         <h1 className="display mt-3 text-4xl">Create account.</h1>
 
-        <div className="mt-6 grid grid-cols-2 gap-2">
-          {[
-            { k: 'student', label: 'Student', icon: GraduationCap },
-            { k: 'mentor', label: 'Mentor', icon: UserCog },
-          ].map((r) => (
-            <button
-              key={r.k}
-              onClick={() => setRole(r.k)}
-              className={`brutal-flat flex items-center justify-center gap-2 py-2.5 text-sm font-bold uppercase ${role === r.k ? 'text-white' : 'text-[var(--ink)]'}`}
-              style={role === r.k ? { background: 'var(--blue)' } : { background: '#fff' }}
-            >
-              <r.icon size={15} /> {r.label}
-            </button>
-          ))}
+        <div className="brutal-flat mt-6 flex items-start gap-2 p-3 text-xs" style={{ background: 'var(--yellow)' }}>
+          <Info size={15} className="mt-0.5 shrink-0" />
+          <span>
+            SIVP is for member institutions. Sign up with your university email — mentors and
+            admins join by invitation from their incubator.
+          </span>
         </div>
 
         <form onSubmit={submit} className="mt-5 space-y-4">
@@ -79,16 +71,14 @@ export default function Signup() {
             <label className="eyebrow mb-2 block">Password</label>
             <input className={inputCls} type="password" value={form.password} onChange={(e) => set('password', e.target.value)} required minLength={6} placeholder="At least 6 characters" />
           </div>
-          {role === 'student' && (
-            <div>
-              <label className="eyebrow mb-2 block">Startup name (optional)</label>
-              <input className={inputCls} value={form.startup} onChange={(e) => set('startup', e.target.value)} placeholder="PawPair" />
-            </div>
-          )}
+          <div>
+            <label className="eyebrow mb-2 block">Startup name (optional)</label>
+            <input className={inputCls} value={form.startup} onChange={(e) => set('startup', e.target.value)} placeholder="PawPair" />
+          </div>
           {err && <p className="brutal-flat p-2 text-xs font-medium" style={{ background: '#FDE2E2', borderColor: '#C0392B' }}>{err}</p>}
           {msg && <p className="brutal-flat p-2 text-xs font-medium" style={{ background: 'var(--yellow)' }}>{msg}</p>}
           <SkeuoButton type="submit" size="lg" className="w-full">
-            {busy ? <><Loader2 size={16} className="animate-spin" /> Creating…</> : `Sign up as ${role}`}
+            {busy ? <><Loader2 size={16} className="animate-spin" /> Creating…</> : 'Create account'}
           </SkeuoButton>
         </form>
 
@@ -98,8 +88,9 @@ export default function Signup() {
           <span className="h-px flex-1 bg-[var(--neu-dark)]" />
         </div>
 
-        <button onClick={() => loginWithProvider('azure')} className="btn btn-light btn-md w-full">Continue with Microsoft</button>
-        <button onClick={() => loginWithProvider('google')} className="btn btn-light btn-md mt-2 w-full">Continue with Google</button>
+        {/* Microsoft hidden for now — re-enable by uncommenting this button */}
+        {/* <button onClick={() => loginWithProvider('azure')} className="btn btn-light btn-md w-full">Continue with Microsoft</button> */}
+        <button onClick={() => loginWithProvider('google')} className="btn btn-light btn-md w-full">Continue with Google</button>
 
         <p className="mt-6 text-center text-sm text-[var(--ink-soft)]">
           Already have an account? <Link to="/login" state={location.state} className="font-bold text-[var(--blue)]">Log in</Link>

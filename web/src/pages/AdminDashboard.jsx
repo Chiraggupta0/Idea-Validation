@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Users, GraduationCap, UserCog, CalendarDays, Megaphone, Trash2, BarChart3, Inbox, Layers } from 'lucide-react'
+import { Users, GraduationCap, UserCog, CalendarDays, Megaphone, Trash2, BarChart3, Inbox, Layers, UserPlus } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts'
 import { useAuth } from '../lib/auth'
 import {
@@ -7,6 +7,7 @@ import {
   getAnnouncements, addAnnouncement, deleteAnnouncement, deleteUser, setUserRole, STAGES,
   getApplications, updateApplication, APP_STAGES,
   getCohorts, addCohort, deleteCohort, setStudentCohort,
+  getInvitations, addInvitation, deleteInvitation,
 } from '../lib/store'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
@@ -32,12 +33,15 @@ export default function AdminDashboard() {
   const [cohorts, setCohorts] = useState([])
   const [cohortName, setCohortName] = useState('')
   const [meetings, setMeetings] = useState([])
+  const [invites, setInvites] = useState([])
+  const [inviteForm, setInviteForm] = useState({ email: '', role: 'mentor' })
+  const [inviteMsg, setInviteMsg] = useState(null)
 
   const loadAll = useCallback(async () => {
-    const [u, a, ap, c, m] = await Promise.all([
-      getUsers(), getAnnouncements(), getApplications(), getCohorts(), getMeetings(),
+    const [u, a, ap, c, m, inv] = await Promise.all([
+      getUsers(), getAnnouncements(), getApplications(), getCohorts(), getMeetings(), getInvitations(),
     ])
-    setUsers(u); setAnns(a); setApps(ap); setCohorts(c); setMeetings(m)
+    setUsers(u); setAnns(a); setApps(ap); setCohorts(c); setMeetings(m); setInvites(inv)
     setProgressMap(await getProgressMap(u.filter((x) => x.role === 'student').map((x) => x.id)))
   }, [])
 
@@ -53,6 +57,24 @@ export default function AdminDashboard() {
     await addAnnouncement(annForm)
     setAnnForm({ title: '', body: '' })
     setAnns(await getAnnouncements())
+  }
+  async function sendInvite(e) {
+    e.preventDefault()
+    setInviteMsg(null)
+    try {
+      await addInvitation({
+        institutionId: user.institution_id,
+        email: inviteForm.email,
+        role: inviteForm.role,
+        invitedBy: user.id,
+        byName: user.name,
+      })
+      setInviteForm({ email: '', role: 'mentor' })
+      setInviteMsg({ ok: true, text: 'Invitation created. Share the signup link with them.' })
+      setInvites(await getInvitations())
+    } catch (e2) {
+      setInviteMsg({ ok: false, text: e2.message })
+    }
   }
   async function createCohort(e) {
     e.preventDefault()
@@ -99,7 +121,69 @@ export default function AdminDashboard() {
               </div>
             ))}
           </div>
-          <p className="mt-3 text-xs text-[var(--muted)]">Admitted applicants sign up at <b>/signup</b> with the email they applied with.</p>
+          <p className="mt-3 text-xs text-[var(--muted)]">
+            Admitted applicants sign up at <b>/signup</b> with the email they applied with — if their
+            domain isn't registered to your institution, create an invite for them above.
+          </p>
+        </div>
+
+        {/* Invitations */}
+        <div className="brutal mt-6 p-5">
+          <div className="eyebrow mb-2 flex items-center gap-2"><UserPlus size={14} /> invite people</div>
+          <p className="mb-3 text-xs text-[var(--muted)]">
+            Mentors and admins can <b>only</b> join by invitation. Students with a registered
+            university email domain can also sign up on their own.
+          </p>
+          <form onSubmit={sendInvite} className="flex flex-wrap gap-2">
+            <input
+              className={`${inputCls} min-w-[220px] flex-1`}
+              type="email"
+              value={inviteForm.email}
+              onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
+              required
+              placeholder="person@university.edu"
+            />
+            <select
+              className="brutal-flat bg-white px-2 py-2 text-sm outline-none"
+              value={inviteForm.role}
+              onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
+            >
+              <option value="student">student</option>
+              <option value="mentor">mentor</option>
+              <option value="admin">admin</option>
+            </select>
+            <SkeuoButton type="submit" size="sm">Create invite</SkeuoButton>
+          </form>
+          {inviteMsg && (
+            <p className={`mt-2 text-xs font-bold ${inviteMsg.ok ? 'text-[var(--blue)]' : 'text-[#c0392b]'}`}>{inviteMsg.text}</p>
+          )}
+
+          <div className="mt-4 space-y-2">
+            {invites.length === 0 && <p className="text-xs text-[var(--muted)]">No invitations yet.</p>}
+            {invites.map((i) => {
+              const expired = new Date(i.expires_at) < new Date()
+              const status = i.accepted_at ? 'accepted' : expired ? 'expired' : 'pending'
+              const bg = { accepted: '#97C459', pending: '#FFD84D', expired: '#E0E0E0' }[status]
+              return (
+                <div key={i.id} className="brutal-flat flex flex-wrap items-center justify-between gap-2 p-2 text-xs">
+                  <span>
+                    <b>{i.email}</b> · {i.role}
+                    {i.by_name && <span className="text-[var(--muted)]"> · invited by {i.by_name}</span>}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="brutal-flat px-2 py-0.5 font-bold uppercase" style={{ background: bg }}>{status}</span>
+                    <button
+                      onClick={async () => { await deleteInvitation(i.id); setInvites(await getInvitations()) }}
+                      className="text-[var(--muted)] hover:text-[var(--ink)]"
+                      aria-label="Delete invitation"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </span>
+                </div>
+              )
+            })}
+          </div>
         </div>
 
         {/* Analytics + announcements */}
