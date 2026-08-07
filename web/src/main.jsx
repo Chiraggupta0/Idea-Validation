@@ -14,6 +14,7 @@ import Signup from './pages/Signup'
 import AdminAuth from './pages/AdminAuth'
 import DashLayout from './components/dash/DashLayout'
 import DashHome from './pages/dash/DashHome'
+import Team from './pages/dash/Team'
 import Community from './pages/dash/Community'
 import Documents from './pages/dash/Documents'
 import Schemes from './pages/dash/Schemes'
@@ -53,6 +54,7 @@ createRoot(document.getElementById('root')).render(
 
           <Route path="/student" element={<ProtectedRoute role="student"><DashLayout /></ProtectedRoute>}>
             <Route index element={<DashHome />} />
+            <Route path="team" element={<Team />} />
             <Route path="community" element={<Community />} />
             <Route path="documents" element={<Documents />} />
             <Route path="schemes" element={<Schemes />} />

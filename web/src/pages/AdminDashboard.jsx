@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Users, GraduationCap, UserCog, CalendarDays, Megaphone, Trash2, BarChart3, Inbox, Layers, UserPlus } from 'lucide-react'
+import { Users, GraduationCap, UserCog, CalendarDays, Megaphone, Trash2, BarChart3, Inbox, Layers, UserPlus, Activity } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts'
 import { useAuth } from '../lib/auth'
 import {
@@ -8,6 +8,7 @@ import {
   getApplications, updateApplication, APP_STAGES,
   getCohorts, addCohort, deleteCohort, setStudentCohort,
   getInvitations, addInvitation, deleteInvitation,
+  getEngagement, updateTeam, STALE_DAYS,
 } from '../lib/store'
 import GlassNav from '../components/GlassNav'
 import SkeuoButton from '../components/SkeuoButton'
@@ -37,11 +38,13 @@ export default function AdminDashboard() {
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'mentor' })
   const [inviteMsg, setInviteMsg] = useState(null)
 
+  const [engagement, setEngagement] = useState([])
+
   const loadAll = useCallback(async () => {
-    const [u, a, ap, c, m, inv] = await Promise.all([
-      getUsers(), getAnnouncements(), getApplications(), getCohorts(), getMeetings(), getInvitations(),
+    const [u, a, ap, c, m, inv, eng] = await Promise.all([
+      getUsers(), getAnnouncements(), getApplications(), getCohorts(), getMeetings(), getInvitations(), getEngagement(),
     ])
-    setUsers(u); setAnns(a); setApps(ap); setCohorts(c); setMeetings(m); setInvites(inv)
+    setUsers(u); setAnns(a); setApps(ap); setCohorts(c); setMeetings(m); setInvites(inv); setEngagement(eng)
     setProgressMap(await getProgressMap(u.filter((x) => x.role === 'student').map((x) => x.id)))
   }, [])
 
@@ -125,6 +128,56 @@ export default function AdminDashboard() {
             Admitted applicants sign up at <b>/signup</b> with the email they applied with — if their
             domain isn't registered to your institution, create an invite for them above.
           </p>
+        </div>
+
+        {/* Startup engagement */}
+        <div className="brutal mt-6 p-5">
+          <div className="eyebrow mb-2 flex items-center gap-2"><Activity size={14} /> startup engagement</div>
+          <p className="mb-3 text-xs text-[var(--muted)]">
+            Startups with no mentor meeting in over {STALE_DAYS} days are flagged. Set funding raised here —
+            founders can't edit their own figure.
+          </p>
+          {engagement.length === 0 ? (
+            <p className="text-sm text-[var(--muted)]">No startups yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-sm">
+                <thead>
+                  <tr className="border-b-2 border-[var(--ink)] text-left text-xs uppercase">
+                    <th className="pb-2">Startup</th>
+                    <th className="pb-2">Stage</th>
+                    <th className="pb-2">Last meeting</th>
+                    <th className="pb-2">Funding raised</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {engagement.map((t) => (
+                    <tr key={t.team_id} className="border-b border-[var(--neu-dark)]" style={t.stale ? { background: '#FDE2E2' } : undefined}>
+                      <td className="py-2 font-bold">{t.team_name}</td>
+                      <td className="py-2 text-xs">{t.stage}</td>
+                      <td className="py-2 text-xs">
+                        {t.last_meeting
+                          ? <>{new Date(t.last_meeting).toLocaleDateString()} <span className="text-[var(--muted)]">· {t.days_since_meeting}d ago</span></>
+                          : <span className="font-bold text-[#c0392b]">never met</span>}
+                      </td>
+                      <td className="py-2">
+                        <input
+                          type="number"
+                          min="0"
+                          defaultValue={t.funding_raised ?? 0}
+                          className="brutal-flat w-32 bg-white px-2 py-1 text-xs outline-none"
+                          onBlur={async (e) => {
+                            const v = Number(e.target.value)
+                            if (v !== (t.funding_raised ?? 0)) { await updateTeam(t.team_id, { funding_raised: v }); loadAll() }
+                          }}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Invitations */}

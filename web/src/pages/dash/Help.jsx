@@ -1,14 +1,15 @@
-import { LayoutDashboard, Users, FileText, Landmark, Mail, Briefcase, BarChart3, ClipboardCheck, Settings } from 'lucide-react'
+import { LayoutDashboard, Users, FileText, Landmark, Mail, Briefcase, BarChart3, ClipboardCheck, Settings, Rocket } from 'lucide-react'
 import PageHead from '../../components/dash/PageHead'
 
 const GUIDE = [
   { icon: LayoutDashboard, title: 'Dashboard', body: 'A snapshot of your startup — mentor, current stage, latest announcement, and your most recent validation.' },
+  { icon: Rocket, title: 'My Startup', body: 'Create your startup or join a co-founder’s, set your sector and stage, and log achievements — funding, patents, hackathon wins, press.' },
   { icon: Users, title: 'Community', body: 'An open chat for everyone in the incubation centre. Ask questions, share wins, find collaborators.' },
   { icon: FileText, title: 'Documents', body: 'Upload documents about your startup. Your mentor and admin can view them, and the admin can request specific ones.' },
   { icon: Landmark, title: 'Schemes & Grants', body: 'Common government schemes for every startup, plus schemes and grants matched specifically to your validated idea.' },
   { icon: Mail, title: 'Contact', body: 'Your mentor’s details, message thread, and meeting scheduler in one place.' },
   { icon: Briefcase, title: 'Portfolio', body: 'Every idea validation you’ve run, saved so you can reopen the full report anytime.' },
-  { icon: BarChart3, title: 'Leaderboard', body: 'All startups ranked by funding raised and how far they’ve progressed.' },
+  { icon: BarChart3, title: 'Leaderboard', body: 'All startups ranked by funding raised and how far they’ve progressed, filterable by sector and stage.' },
   { icon: ClipboardCheck, title: 'Evaluation', body: 'Reviews, scores, and notices from your mentor.' },
   { icon: Settings, title: 'Settings', body: 'Change your name, phone, photo, and password.' },
 ]

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { UserCog, Megaphone, FileSearch, TrendingUp, FileText } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
-import { getUser, getProgress, getAnnouncements, getReports, getCohortFor } from '../../lib/store'
+import { getUser, getProgress, getAnnouncements, getReports, getCohortFor, getMyTeam } from '../../lib/store'
 import PageHead from '../../components/dash/PageHead'
 import SkeuoButton from '../../components/SkeuoButton'
 
@@ -13,21 +13,24 @@ export default function DashHome() {
   const [progress, setProgress] = useState({ stage: 'Idea', percent: 10 })
   const [announcement, setAnnouncement] = useState(null)
   const [reports, setReports] = useState([])
+  const [team, setTeam] = useState(null)
 
   useEffect(() => {
     ;(async () => {
-      const [m, c, p, an, rp] = await Promise.all([
+      const [m, c, p, an, rp, t] = await Promise.all([
         getUser(user.mentor_id),
         getCohortFor(user.cohort_id),
         getProgress(user.id),
         getAnnouncements(),
         getReports(user.id),
+        getMyTeam(user.id),
       ])
       setMentor(m)
       setCohort(c)
       setProgress(p)
       setAnnouncement(an[0] ?? null)
       setReports(rp)
+      setTeam(t)
     })()
   }, [user.id, user.mentor_id, user.cohort_id])
 
@@ -36,7 +39,7 @@ export default function DashHome() {
   return (
     <div>
       <PageHead eyebrow="dashboard" title={`Hi, ${(user.name || 'there').split(' ')[0]}.`}>
-        {user.startup ? `Everything about ${user.startup}, in one place.` : 'Track your startup journey with your mentor.'}
+        {team ? `Everything about ${team.name}, in one place.` : 'Track your startup journey with your mentor.'}
       </PageHead>
 
       {announcement && (
@@ -51,8 +54,21 @@ export default function DashHome() {
         {/* Startup + mentor */}
         <div className="brutal p-5">
           <div className="eyebrow mb-3">your startup</div>
-          <div className="font-display text-2xl font-bold">{user.startup || '—'}</div>
-          {user.tagline && <p className="text-sm text-[var(--ink-soft)]">{user.tagline}</p>}
+          {team ? (
+            <>
+              <div className="font-display text-2xl font-bold">{team.name}</div>
+              {team.tagline && <p className="text-sm text-[var(--ink-soft)]">{team.tagline}</p>}
+              <div className="mt-1 text-xs text-[var(--muted)]">
+                {team.members.length} founder{team.members.length === 1 ? '' : 's'}
+                {team.sector ? ` · ${team.sector}` : ''}
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-[var(--ink-soft)]">You haven't set up a startup yet.</p>
+              <Link to="/student/team" className="btn btn-light btn-sm mt-2">Create or join one</Link>
+            </>
+          )}
           {cohort && <div className="mt-2 inline-block brutal-flat px-2 py-0.5 text-xs font-bold uppercase" style={{ background: 'var(--blue)', color: '#fff' }}>{cohort.name}</div>}
 
           <div className="mt-5 eyebrow mb-2 flex items-center gap-2"><UserCog size={14} /> your mentor</div>

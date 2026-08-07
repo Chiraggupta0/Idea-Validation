@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import {
   LayoutDashboard, Users, FileText, Landmark, Mail, Briefcase,
-  BarChart3, ClipboardCheck, Settings, HelpCircle, LogOut, Menu, X,
+  BarChart3, ClipboardCheck, Settings, HelpCircle, LogOut, Menu, X, Rocket,
 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
 
 const NAV = [
   { to: '/student', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/student/team', label: 'My Startup', icon: Rocket },
   { to: '/student/community', label: 'Community', icon: Users },
   { to: '/student/documents', label: 'Documents', icon: FileText },
   { to: '/student/schemes', label: 'Schemes & Grants', icon: Landmark },

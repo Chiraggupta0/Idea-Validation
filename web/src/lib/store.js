@@ -4,6 +4,13 @@ import { supabase } from './supabase'
    enforces who can read/write what — see supabase/schema.sql. */
 
 export const STAGES = ['Idea', 'Validation', 'MVP', 'Launch', 'Growth', 'Fundraising']
+export const SECTORS = [
+  'AI / ML', 'Fintech', 'Healthtech', 'Edtech', 'Agritech', 'E-commerce',
+  'SaaS', 'Cleantech', 'Foodtech', 'Logistics', 'Social Impact / SDG', 'Deeptech', 'Other',
+]
+export const ACHIEVEMENT_TYPES = ['Funding', 'Patent', 'Hackathon', 'Press', 'Award', 'Partnership', 'Other']
+/** A startup with no mentor contact in this many days is flagged as going quiet. */
+export const STALE_DAYS = 30
 export const APP_STAGES = ['Applied', 'Shortlisted', 'Interview', 'Admitted', 'Rejected']
 export const EVENT_TYPES = ['Workshop', 'Demo Day', 'Pitch Night', 'Guest Talk', 'Deadline']
 
@@ -315,25 +322,112 @@ export async function deleteDocument(doc) {
   await supabase.from('documents').delete().eq('id', doc.id)
 }
 
+/* ---------- teams (a startup and its founders) ---------- */
+export async function getMyTeam(profileId) {
+  const { data: membership } = await supabase
+    .from('team_members').select('team_id, role').eq('profile_id', profileId).maybeSingle()
+  if (!membership) return null
+  const { data: team } = await supabase
+    .from('teams').select('*').eq('id', membership.team_id).maybeSingle()
+  if (!team) return null
+  return { ...team, myRole: membership.role, members: await getTeamMembers(team.id) }
+}
+export async function getTeamMembers(teamId) {
+  const { data } = await supabase
+    .from('team_members')
+    .select('role, joined_at, profiles(id, name, email, phone, avatar_url)')
+    .eq('team_id', teamId)
+  return (data ?? []).map((r) => ({ ...r.profiles, role: r.role, joined_at: r.joined_at }))
+}
+export async function createTeam({ name, tagline, sector, stage, profileId }) {
+  const { data, error } = await supabase
+    .from('teams').insert({ name, tagline, sector, stage: stage || 'Idea' }).select().single()
+  if (error) throw new Error(error.message)
+  const { error: memberErr } = await supabase
+    .from('team_members').insert({ team_id: data.id, profile_id: profileId, role: 'founder' })
+  if (memberErr) throw new Error(memberErr.message)
+  return data
+}
+export async function updateTeam(id, patch) {
+  const { error } = await supabase.from('teams').update(patch).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+/** Join by team name — co-founders don't have the team's UUID to hand. */
+export async function joinTeamByName(name, profileId) {
+  const { data: team } = await supabase
+    .from('teams').select('id').ilike('name', name.trim()).maybeSingle()
+  if (!team) throw new Error(`No startup named "${name}" in your institution.`)
+  const { error } = await supabase
+    .from('team_members').insert({ team_id: team.id, profile_id: profileId, role: 'co-founder' })
+  if (error) throw new Error(error.message)
+  return team.id
+}
+export async function leaveTeam(profileId) {
+  await supabase.from('team_members').delete().eq('profile_id', profileId)
+}
+
+/* ---------- achievements ---------- */
+export async function getAchievements(teamId) {
+  const { data } = await supabase
+    .from('achievements').select('*').eq('team_id', teamId)
+    .order('happened_on', { ascending: false, nullsFirst: false })
+  return data ?? []
+}
+export async function addAchievement(a) {
+  const { error } = await supabase.from('achievements').insert({
+    team_id: a.teamId, type: a.type, title: a.title, description: a.description,
+    amount: a.amount || null, happened_on: a.happenedOn || null, created_by: a.createdBy,
+  })
+  if (error) throw new Error(error.message)
+}
+export async function deleteAchievement(id) {
+  await supabase.from('achievements').delete().eq('id', id)
+}
+
+/* ---------- engagement (which startups are going quiet) ---------- */
+export async function getEngagement() {
+  const { data } = await supabase.from('team_engagement').select('*')
+  return (data ?? []).map((r) => ({
+    ...r,
+    stale: r.days_since_meeting == null || r.days_since_meeting > STALE_DAYS,
+  }))
+}
+
 /* ---------- leaderboard (all startups, ranked) ---------- */
+/** Ranks startups (not individuals) by funding raised, then by progress. */
 export async function getLeaderboard() {
-  const [{ data: profiles }, { data: prog }] = await Promise.all([
-    supabase.from('profiles').select('id, name, startup, tagline, funding_raised').eq('role', 'student'),
-    supabase.from('progress').select('student_id, stage, percent'),
+  const [{ data: teams }, { data: members }, { data: prog }] = await Promise.all([
+    supabase.from('teams').select('*'),
+    supabase.from('team_members').select('team_id, profile_id, role, profiles(name)'),
+    supabase.from('progress').select('student_id, percent'),
   ])
-  const progMap = {}
-  ;(prog ?? []).forEach((p) => { progMap[p.student_id] = p })
-  return (profiles ?? [])
-    .filter((p) => p.startup && p.startup.trim())
-    .map((p) => ({
-      id: p.id,
-      startup: p.startup,
-      founder: p.name,
-      tagline: p.tagline,
-      funding: p.funding_raised ?? 0,
-      stage: progMap[p.id]?.stage ?? 'Idea',
-      percent: progMap[p.id]?.percent ?? 0,
-    }))
+  const percentOf = {}
+  ;(prog ?? []).forEach((p) => { percentOf[p.student_id] = p.percent })
+
+  const byTeam = {}
+  ;(members ?? []).forEach((m) => {
+    ;(byTeam[m.team_id] ||= []).push({
+      name: m.profiles?.name,
+      role: m.role,
+      percent: percentOf[m.profile_id] ?? 0,
+    })
+  })
+
+  return (teams ?? [])
+    .map((t) => {
+      const crew = byTeam[t.id] ?? []
+      return {
+        id: t.id,
+        startup: t.name,
+        tagline: t.tagline,
+        sector: t.sector,
+        stage: t.stage,
+        funding: t.funding_raised ?? 0,
+        founders: crew.map((c) => c.name).filter(Boolean),
+        // Team progress = the furthest any founder has recorded.
+        percent: crew.length ? Math.max(...crew.map((c) => c.percent)) : 0,
+      }
+    })
     .sort((a, b) => b.funding - a.funding || b.percent - a.percent)
 }
 
