@@ -80,7 +80,11 @@ jobs:
             export IMAGE_TAG="${IMAGE_TAG}"
             docker compose pull
             docker compose up -d --force-recreate
-            docker image prune -f
+            # -a is required: every deploy pushes a new SHA-tagged image, and
+            # plain `prune` only removes *dangling* images, so tagged builds
+            # accumulated until the disk filled. Images backing a running
+            # container are never removed by this.
+            docker image prune -af
 
             echo "Verifying deploy..."
             for i in 1 2 3 4 5 6 7 8 9 10; do
