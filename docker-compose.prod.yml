@@ -5,11 +5,22 @@
 # IMAGE_TAG is set to the deploying commit's SHA by CI, so each deploy
 # references an exact, unambiguous image — never the mutable `:latest` tag —
 # which guarantees docker compose always recreates the container.
+#
+# Every service caps its logs. Docker's default json-file driver grows
+# without limit, which on a small EBS volume eventually fills the disk and
+# takes the whole stack down.
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
 
 services:
   backend:
     image: chiraggupta01/sivp-backend:${IMAGE_TAG:-latest}
     restart: always
+    logging: *default-logging
     ports:
       - "8080:8080"
     environment:
@@ -21,12 +32,14 @@ services:
   web:
     image: chiraggupta01/sivp-web:${IMAGE_TAG:-latest}
     restart: always
+    logging: *default-logging
     ports:
       - "80:80"
 
   n8n:
     image: n8nio/n8n:latest
     restart: always
+    logging: *default-logging
     ports:
       - "5678:5678"
     environment:
@@ -36,5 +49,11 @@ services:
       WEBHOOK_URL: http://34.232.142.24:5678/
       GENERIC_TIMEZONE: Asia/Kolkata
       N8N_SECURE_COOKIE: "false"
+      # One validation writes 11 executions (10 agents + NEXUS), each holding
+      # the full JSON payload it passed downstream. Without pruning, the SQLite
+      # database grows without bound and is the biggest long-term disk risk here.
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "168"          # keep 7 days of history
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: "2000" # …and at most this many
     volumes:
       - /home/ubuntu/n8n-data:/home/node/.n8n
